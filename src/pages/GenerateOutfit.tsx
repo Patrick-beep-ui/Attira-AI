@@ -5,8 +5,9 @@ import { HeaderBar } from "@/components/HeaderBar";
 import { TagChip } from "@/components/TagChip";
 import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
-import { generateOutfit, type GeneratedOutfit } from "@/services/ai-service";
+import { generateOutfit } from "@/services/ai-service";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 const occasions = ["Work", "Casual", "Date Night", "Event"];
 const formalities = ["Relaxed", "Balanced", "Polished"];
@@ -20,10 +21,18 @@ export default function GenerateOutfit() {
   const handleGenerate = async () => {
     if (!occasion) return;
     setLoading(true);
-    const result = await generateOutfit(occasion.toLowerCase().replace(" ", "-"));
-    setLoading(false);
-    // Pass result via state
-    navigate("/outfit-result", { state: { outfit: result } });
+    try {
+      const result = await generateOutfit(
+        occasion.toLowerCase().replace(" ", "-"),
+        formality.toLowerCase()
+      );
+      navigate("/outfit-result", { state: { outfit: result } });
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Failed to generate outfit. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -59,7 +68,7 @@ export default function GenerateOutfit() {
             <Skeleton className="h-40 w-full rounded-lg" />
             <Skeleton className="h-4 w-3/4 rounded" />
             <Skeleton className="h-4 w-1/2 rounded" />
-            <p className="text-center text-body-sm text-muted-foreground">Styling your perfect look...</p>
+            <p className="text-center text-body-sm text-muted-foreground">AI is styling your perfect look...</p>
           </div>
         ) : (
           <Button
