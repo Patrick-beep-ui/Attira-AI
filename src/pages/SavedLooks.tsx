@@ -2,24 +2,45 @@ import { AppShell } from "@/components/AppShell";
 import { HeaderBar } from "@/components/HeaderBar";
 import { OutfitCard } from "@/components/OutfitCard";
 import { TagChip } from "@/components/TagChip";
-import { getTodaysLook } from "@/services/ai-service";
-import { useState, useMemo } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useState, useEffect } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+import type { GeneratedOutfit } from "@/services/ai-service";
 
 const filterOptions = ["All", "Work", "Casual", "Date Night", "Event"];
 
 export default function SavedLooks() {
+  const { user } = useAuth();
   const [filter, setFilter] = useState("All");
+  const [looks, setLooks] = useState<GeneratedOutfit[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock saved looks
-  const looks = useMemo(() => {
-    const base = getTodaysLook();
-    return [
-      { ...base, id: "s1", occasion: "work" },
-      { ...base, id: "s2", occasion: "casual" },
-      { ...base, id: "s3", occasion: "date-night" },
-      { ...base, id: "s4", occasion: "event" },
-    ];
-  }, []);
+  useEffect(() => {
+    if (!user) return;
+    const fetchLooks = async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("saved_outfits")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (!error && data) {
+        setLooks(
+          data.map((row) => ({
+            id: row.id,
+            occasion: row.occasion,
+            items: (row.items as any[]) || [],
+            stylingNotes: row.styling_notes || "",
+            confidence: row.confidence ?? 0,
+          }))
+        );
+      }
+      setLoading(false);
+    };
+    fetchLooks();
+  }, [user]);
 
   const filtered = filter === "All" ? looks : looks.filter((l) => l.occasion === filter.toLowerCase().replace(" ", "-"));
 
@@ -33,16 +54,24 @@ export default function SavedLooks() {
         ))}
       </div>
 
-      <div className="grid grid-cols-2 gap-3 px-4 pb-24 pt-3">
-        {filtered.map((look) => (
-          <OutfitCard key={look.id} outfit={look} compact />
-        ))}
-        {filtered.length === 0 && (
-          <div className="col-span-2 py-16 text-center">
-            <p className="text-body text-muted-foreground">No saved looks yet.</p>
-          </div>
-        )}
-      </div>
+      {loading ? (
+        <div className="grid grid-cols-2 gap-3 px-4 pt-3">
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-48 rounded-lg" />
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-3 px-4 pb-24 pt-3">
+          {filtered.map((look) => (
+            <OutfitCard key={look.id} outfit={look} compact />
+          ))}
+          {filtered.length === 0 && (
+            <div className="col-span-2 py-16 text-center">
+              <p className="text-body text-muted-foreground">No saved looks yet.</p>
+            </div>
+          )}
+        </div>
+      )}
     </AppShell>
   );
 }
