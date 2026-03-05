@@ -12,6 +12,7 @@ export interface GeneratedOutfit {
   id: string;
   items: OutfitItem[];
   occasion: string;
+  formality?: string;
   stylingNotes: string;
   confidence: number;
 }

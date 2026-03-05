@@ -51,6 +51,7 @@ export type Database = {
         Row: {
           confidence: number | null
           created_at: string
+          formality: string | null
           id: string
           items: Json
           occasion: string
@@ -60,6 +61,7 @@ export type Database = {
         Insert: {
           confidence?: number | null
           created_at?: string
+          formality?: string | null
           id?: string
           items?: Json
           occasion: string
@@ -69,6 +71,7 @@ export type Database = {
         Update: {
           confidence?: number | null
           created_at?: string
+          formality?: string | null
           id?: string
           items?: Json
           occasion?: string
