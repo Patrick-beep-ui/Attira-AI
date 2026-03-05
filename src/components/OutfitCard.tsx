@@ -18,14 +18,22 @@ export function OutfitCard({ outfit, compact, onClick, className }: OutfitCardPr
         className
       )}
     >
-      {/* Color swatches grid */}
+      {/* Item thumbnails grid */}
       <div className={cn("grid grid-cols-2 gap-px bg-border", compact ? "h-32" : "h-44")}>
         {outfit.items.slice(0, 4).map((item) => (
           <div key={item.id} className="flex items-center justify-center bg-muted/50 p-2">
-            <div
-              className="h-10 w-10 rounded-full border border-border shadow-sm"
-              style={{ backgroundColor: item.color }}
-            />
+            {item.imageUrl ? (
+              <img
+                src={item.imageUrl}
+                alt={item.name}
+                className="h-full w-full rounded object-cover"
+              />
+            ) : (
+              <div
+                className="h-10 w-10 rounded-full border border-border shadow-sm"
+                style={{ backgroundColor: item.color }}
+              />
+            )}
           </div>
         ))}
       </div>

@@ -34,7 +34,7 @@ serve(async (req) => {
     // Fetch wardrobe
     const { data: wardrobeItems, error: wardrobeError } = await supabase
       .from("wardrobe_items")
-      .select("id, name, category, color, season, fabric")
+      .select("id, name, category, color, season, fabric, image_url")
       .eq("user_id", user.id);
 
     if (wardrobeError) throw new Error("Failed to fetch wardrobe");
@@ -194,6 +194,19 @@ ${wardrobeList}`;
 
     const outfit = JSON.parse(toolCall.function.arguments);
     outfit.id = crypto.randomUUID();
+
+    // Enrich AI-returned items with image_url from actual wardrobe data
+    if (outfit.items && wardrobeItems) {
+      const wardrobeMap = new Map(wardrobeItems.map((w: any) => [w.id, w]));
+      outfit.items = outfit.items.map((item: any) => {
+        const real = wardrobeMap.get(item.id);
+        return {
+          ...item,
+          imageUrl: real?.image_url || null,
+          color: real?.color || item.color,
+        };
+      });
+    }
 
     return new Response(JSON.stringify(outfit), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

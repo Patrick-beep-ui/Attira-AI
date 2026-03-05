@@ -7,11 +7,16 @@ import { Bookmark, RefreshCw, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import type { GeneratedOutfit } from "@/services/ai-service";
 import { motion } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useState } from "react";
 
 export default function OutfitResult() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const outfit = location.state?.outfit as GeneratedOutfit | undefined;
+  const [saving, setSaving] = useState(false);
 
   if (!outfit) {
     return (
@@ -23,6 +28,31 @@ export default function OutfitResult() {
       </AppShell>
     );
   }
+
+  const handleSave = async () => {
+    if (!user) {
+      toast.error("Please sign in to save looks.");
+      return;
+    }
+    setSaving(true);
+    try {
+      const { error } = await supabase.from("saved_outfits").insert({
+        user_id: user.id,
+        occasion: outfit.occasion,
+        items: outfit.items as any,
+        styling_notes: outfit.stylingNotes,
+        confidence: outfit.confidence,
+      });
+      if (error) throw error;
+      toast.success("Look saved!");
+      navigate("/saved");
+    } catch (err: any) {
+      console.error(err);
+      toast.error("Failed to save look.");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <AppShell>
@@ -43,7 +73,15 @@ export default function OutfitResult() {
               transition={{ delay: i * 0.1, duration: 0.3 }}
               className="flex items-center gap-4 rounded-lg border border-border bg-card p-4 shadow-sm"
             >
-              <div className="h-12 w-12 rounded-full border border-border shadow-sm" style={{ backgroundColor: item.color }} />
+              {item.imageUrl ? (
+                <img
+                  src={item.imageUrl}
+                  alt={item.name}
+                  className="h-12 w-12 rounded-full border border-border object-cover shadow-sm"
+                />
+              ) : (
+                <div className="h-12 w-12 rounded-full border border-border shadow-sm" style={{ backgroundColor: item.color }} />
+              )}
               <div className="flex-1">
                 <p className="text-body font-medium text-foreground">{item.name}</p>
                 <p className="text-caption uppercase text-muted-foreground">{item.category}</p>
@@ -73,14 +111,12 @@ export default function OutfitResult() {
           className="flex gap-3"
         >
           <Button
-            onClick={() => {
-              toast.success("Look saved!");
-              navigate("/saved");
-            }}
+            onClick={handleSave}
+            disabled={saving}
             className="flex-1 gap-2 rounded-xl py-6"
           >
             <Bookmark className="h-4 w-4" />
-            Save Look
+            {saving ? "Saving..." : "Save Look"}
           </Button>
           <Button variant="outline" onClick={() => navigate("/generate")} className="gap-2 rounded-xl py-6">
             <RefreshCw className="h-4 w-4" />
