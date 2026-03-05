@@ -196,17 +196,24 @@ ${wardrobeList}`;
     outfit.id = crypto.randomUUID();
 
     // Enrich AI-returned items with image_url from actual wardrobe data
+    // AI often invents IDs, so match by name (case-insensitive) as fallback
     if (outfit.items && wardrobeItems) {
-      const wardrobeMap = new Map(wardrobeItems.map((w: any) => [w.id, w]));
+      const wardrobeById = new Map(wardrobeItems.map((w: any) => [w.id, w]));
+      const wardrobeByName = new Map(wardrobeItems.map((w: any) => [w.name.toLowerCase().trim(), w]));
       outfit.items = outfit.items.map((item: any) => {
-        const real = wardrobeMap.get(item.id);
+        const real = wardrobeById.get(item.id) || wardrobeByName.get(item.name?.toLowerCase().trim());
         return {
           ...item,
+          id: real?.id || item.id,
           imageUrl: real?.image_url || null,
           color: real?.color || item.color,
         };
       });
     }
+
+    // Store the original occasion/formality for filtering
+    outfit.occasion = occasion || "casual";
+    outfit.formality = formality || "balanced";
 
     return new Response(JSON.stringify(outfit), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

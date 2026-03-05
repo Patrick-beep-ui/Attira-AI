@@ -39,6 +39,7 @@ export default function OutfitResult() {
       const { error } = await supabase.from("saved_outfits").insert({
         user_id: user.id,
         occasion: outfit.occasion,
+        formality: outfit.formality || "balanced",
         items: outfit.items as any,
         styling_notes: outfit.stylingNotes,
         confidence: outfit.confidence,

@@ -1,0 +1,1 @@
+ALTER TABLE public.saved_outfits ADD COLUMN IF NOT EXISTS formality text DEFAULT 'balanced';
