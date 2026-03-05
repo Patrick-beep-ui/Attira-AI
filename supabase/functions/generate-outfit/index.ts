@@ -200,8 +200,21 @@ ${wardrobeList}`;
     if (outfit.items && wardrobeItems) {
       const wardrobeById = new Map(wardrobeItems.map((w: any) => [w.id, w]));
       const wardrobeByName = new Map(wardrobeItems.map((w: any) => [w.name.toLowerCase().trim(), w]));
+      
+      // Fuzzy match: find wardrobe item whose name is contained in AI name or vice versa
+      const fuzzyMatch = (aiName: string) => {
+        const lower = aiName.toLowerCase().trim();
+        // Exact match first
+        if (wardrobeByName.has(lower)) return wardrobeByName.get(lower);
+        // Check if any wardrobe name is contained in AI name or AI name in wardrobe name
+        for (const [wName, wItem] of wardrobeByName) {
+          if (lower.includes(wName) || wName.includes(lower)) return wItem;
+        }
+        return null;
+      };
+      
       outfit.items = outfit.items.map((item: any) => {
-        const real = wardrobeById.get(item.id) || wardrobeByName.get(item.name?.toLowerCase().trim());
+        const real = wardrobeById.get(item.id) || fuzzyMatch(item.name || "");
         return {
           ...item,
           id: real?.id || item.id,
