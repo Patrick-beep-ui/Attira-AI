@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { WardrobeItemDetail } from "@/components/WardrobeItemDetail";
 
 const categories = ["All", "Tops", "Bottoms", "Shoes", "Accessories", "Outerwear"];
 
@@ -29,7 +30,9 @@ export default function Wardrobe() {
   const [addOpen, setAddOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-
+  const [detailItem, setDetailItem] = useState<WardrobeItem | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  
   // Form state
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
@@ -134,7 +137,11 @@ export default function Wardrobe() {
           </p>
         ) : (
           filtered.map((item) => (
-            <div key={item.id} className="animate-fade-slide-up overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+            <div
+              key={item.id}
+              onClick={() => { setDetailItem(item); setDetailOpen(true); }}
+              className="animate-fade-slide-up cursor-pointer overflow-hidden rounded-lg border border-border bg-card shadow-sm transition-transform active:scale-[0.97]"
+            >
               <div className="flex h-32 items-center justify-center bg-muted/50 overflow-hidden">
                 {item.image_url ? (
                   <img src={item.image_url} alt={item.name} className="h-full w-full object-cover" />
@@ -203,6 +210,12 @@ export default function Wardrobe() {
           </div>
         </DialogContent>
       </Dialog>
+      <WardrobeItemDetail
+        item={detailItem}
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        onUpdated={fetchItems}
+      />
     </AppShell>
   );
 }
