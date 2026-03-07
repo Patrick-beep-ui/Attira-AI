@@ -66,7 +66,7 @@ export default function OutfitResult() {
       <div className="space-y-6 px-4 pt-4 pb-8">
         {/* Items */}
         <div className="space-y-3">
-          {outfit.items.map((item, i) => (
+          {outfit.items?.map((item, i) => (
             <motion.div
               key={item.id}
               initial={{ opacity: 0, y: 8 }}
