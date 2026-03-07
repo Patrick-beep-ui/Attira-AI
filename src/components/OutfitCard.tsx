@@ -19,14 +19,15 @@ export function OutfitCard({ outfit, compact, onClick, className }: OutfitCardPr
       )}
     >
       {/* Item thumbnails grid */}
-      <div className={cn("grid grid-cols-2 gap-px bg-border", compact ? "h-32" : "h-44")}>
+      <div className={cn("grid grid-cols-2 gap-px bg-border overflow-hidden -mt-2.5", 
+        compact ? "h-32" : "h-44")}>
         {outfit.items.slice(0, 4).map((item) => (
-          <div key={item.id} className="flex items-center justify-center bg-muted/50 p-2">
+          <div key={item.id} className="flex items-center justify-center bg-muted/50 p-2 aspect-square mx-auto w-20 rounded-full">
             {item.imageUrl ? (
               <img
                 src={item.imageUrl}
                 alt={item.name}
-                className="h-full w-full rounded object-cover"
+                className="h-full w-full object-cover rounded-full"
               />
             ) : (
               <div

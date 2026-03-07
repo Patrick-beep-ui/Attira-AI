@@ -1,0 +1,127 @@
+import { useState } from "react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Loader2, Trash2, Save } from "lucide-react";
+
+interface WardrobeItem {
+  id: string;
+  name: string;
+  category: string;
+  color: string | null;
+  image_url: string | null;
+}
+
+interface Props {
+  item: WardrobeItem | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onUpdated: () => void;
+}
+
+export function WardrobeItemDetail({ item, open, onOpenChange, onUpdated }: Props) {
+  const [name, setName] = useState("");
+  const [color, setColor] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  // Sync form when item changes
+  const [prevId, setPrevId] = useState<string | null>(null);
+  if (item && item.id !== prevId) {
+    setPrevId(item.id);
+    setName(item.name);
+    setColor(item.color || "");
+  }
+
+  if (!item) return null;
+
+  const handleSave = async () => {
+    if (!name.trim()) return toast.error("Name is required");
+    setSaving(true);
+    const { error } = await supabase
+      .from("wardrobe_items")
+      .update({ name: name.trim(), color: color.trim() || null })
+      .eq("id", item.id);
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    toast.success("Item updated");
+    onUpdated();
+  };
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    // Delete image from storage if exists
+    if (item.image_url) {
+      const path = item.image_url.split("/wardrobe-images/")[1];
+      if (path) await supabase.storage.from("wardrobe-images").remove([path]);
+    }
+    const { error } = await supabase.from("wardrobe_items").delete().eq("id", item.id);
+    setDeleting(false);
+    if (error) return toast.error(error.message);
+    toast.success("Item deleted");
+    onOpenChange(false);
+    onUpdated();
+  };
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="bottom" className="rounded-t-2xl px-4 pb-8 pt-6 max-h-[90vh] overflow-y-auto">
+        <SheetHeader className="mb-4">
+          <SheetTitle className="font-display text-display-3">Item Details</SheetTitle>
+        </SheetHeader>
+
+        {/* Large Image */}
+        <div className="mb-5 flex items-center justify-center overflow-hidden rounded-xl bg-muted/50 border border-border" style={{ minHeight: 200 }}>
+          {item.image_url ? (
+            <img src={item.image_url} alt={item.name} className="max-h-72 w-full object-contain" />
+          ) : (
+            <div className="h-24 w-24 rounded-full border border-border shadow-sm" style={{ backgroundColor: item.color || "#ccc" }} />
+          )}
+        </div>
+
+        {/* Editable Fields */}
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label className="text-body-sm">Name</Label>
+            <Input className="rounded-xl" value={name} onChange={(e) => setName(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-body-sm">Color</Label>
+            <Input className="rounded-xl" placeholder="e.g. Navy Blue" value={color} onChange={(e) => setColor(e.target.value)} />
+          </div>
+          <p className="text-caption text-muted-foreground">Category: {item.category}</p>
+
+          <Button onClick={handleSave} disabled={saving} className="w-full rounded-xl py-5">
+            {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+            {saving ? "Saving..." : "Save Changes"}
+          </Button>
+
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" className="w-full rounded-xl py-5">
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete Item
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="mx-4 max-w-sm rounded-2xl">
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete "{item.name}"?</AlertDialogTitle>
+                <AlertDialogDescription>This will permanently remove this item from your wardrobe.</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete} disabled={deleting} className="rounded-xl">
+                  {deleting ? "Deleting..." : "Delete"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
