@@ -137,7 +137,11 @@ export default function Wardrobe() {
           </p>
         ) : (
           filtered.map((item) => (
-            <div key={item.id} className="animate-fade-slide-up overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+            <div
+              key={item.id}
+              onClick={() => { setDetailItem(item); setDetailOpen(true); }}
+              className="animate-fade-slide-up cursor-pointer overflow-hidden rounded-lg border border-border bg-card shadow-sm transition-transform active:scale-[0.97]"
+            >
               <div className="flex h-32 items-center justify-center bg-muted/50 overflow-hidden">
                 {item.image_url ? (
                   <img src={item.image_url} alt={item.name} className="h-full w-full object-cover" />
