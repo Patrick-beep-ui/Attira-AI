@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { WardrobeItemDetail } from "@/components/WardrobeItemDetail";
 
 const categories = ["All", "Tops", "Bottoms", "Shoes", "Accessories", "Outerwear"];
 
@@ -29,7 +30,9 @@ export default function Wardrobe() {
   const [addOpen, setAddOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-
+  const [detailItem, setDetailItem] = useState<WardrobeItem | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  
   // Form state
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
