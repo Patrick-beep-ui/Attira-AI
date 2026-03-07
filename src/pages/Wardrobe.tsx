@@ -210,6 +210,12 @@ export default function Wardrobe() {
           </div>
         </DialogContent>
       </Dialog>
+      <WardrobeItemDetail
+        item={detailItem}
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        onUpdated={fetchItems}
+      />
     </AppShell>
   );
 }
