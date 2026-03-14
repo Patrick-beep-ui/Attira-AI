@@ -1,4 +1,4 @@
-import { AIClientInterface, AIResponse } from "../AIClientInterface";
+import { AIClientInterface, AIResponse } from "../AIClientInterface.ts";
 
 export class OpenAIClient implements AIClientInterface {
 
@@ -8,7 +8,7 @@ export class OpenAIClient implements AIClientInterface {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
+        "Authorization": `Bearer ${Deno.env.get("OPENAI_API_KEY")}`
       },
       body: JSON.stringify({
         model: "gpt-4.1-mini",
