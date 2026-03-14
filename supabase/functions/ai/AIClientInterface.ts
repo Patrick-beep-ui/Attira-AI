@@ -1,3 +1,4 @@
+// agent mode is working
 export interface AIClientInterface {
     generate(prompt: string, timeout?: number): Promise<AIResponse>;
   }
