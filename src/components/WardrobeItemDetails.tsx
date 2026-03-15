@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,23 +37,24 @@ export function WardrobeItemDetail({ item, open, onOpenChange, onUpdated }: Prop
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  // Sync form when item changes
-  const [prevId, setPrevId] = useState<string | null>(null);
-  if (item && item.id !== prevId) {
-    setPrevId(item.id);
+  // Sync form when item changes (robust to refactors; respond to prop changes)
+  useEffect(() => {
+    if (!item) return;
     setName(item.name);
-    setColor(item.color || "");
-    setFabric(item.fabric || "");
-    setSize(item.size || "");
-    setBrand(item.brand || "");
-  }
+    setColor(item.color ?? "");
+    setFabric(item.fabric ?? "");
+    setSize(item.size ?? "");
+    setBrand(item.brand ?? "");
+  }, [item?.id, item?.name, item?.color, item?.fabric, item?.size, item?.brand]);
 
   if (!item) return null;
 
   const handleSave = async () => {
     if (!name.trim()) return toast.error("Name is required");
+
     setSaving(true);
-    const { error } = await supabase
+
+    const { data, error } = await supabase
       .from("wardrobe_items")
       .update({
         name: name.trim(),
@@ -62,10 +63,22 @@ export function WardrobeItemDetail({ item, open, onOpenChange, onUpdated }: Prop
         size: size.trim() || null,
         brand: brand.trim() || null,
       })
-      .eq("id", item.id);
+      .eq("id", item.id)
+      .select();
+
     setSaving(false);
+
     if (error) return toast.error(error.message);
+
+    console.log("Updated rows:", data);
+
+    if (!data || data.length === 0) {
+      toast.error("Update failed (no rows affected)");
+      return;
+    }
+
     toast.success("Item updated");
+    onOpenChange(false);
     onUpdated();
   };
 

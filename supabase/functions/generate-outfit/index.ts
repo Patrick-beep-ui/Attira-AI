@@ -40,12 +40,24 @@ serve(async (req) => {
 
     const { data: wardrobeItems, error: wardrobeError } = await supabase
       .from("wardrobe_items")
-      .select("id, name, color, image_url, fabric, season, category_id, clothing_categories(name)")
+      .select(`
+        id,
+        name,
+        color,
+        image_url,
+        fabric,
+        category_id,
+        brand,
+        size,
+        clothing_categories(name)
+      `)
       .eq("user_id", user.id);
-    
-    if (wardrobeError) throw new Error("Failed to fetch wardrobe");
 
-    // Map to a simple shape for the AI prompt, deriving a readable category name from the refactored schema
+    if (wardrobeError) {
+      console.error("Wardrobe fetch failed:", wardrobeError);
+      throw new Error(`Failed to fetch wardrobe`);
+    }
+
     const wardrobeMapped = wardrobeItems.map((item: any) => ({
       id: item.id,
       name: item.name,
@@ -53,10 +65,7 @@ serve(async (req) => {
       color: item.color ?? null,
       image_url: item.image_url ?? null,
       fabric: item.fabric ?? null,
-      season: item.season ?? null,
     }));
-
-    console.log("Wardrobe items:", wardrobeMapped);
 
     /*
     Fetch profile
@@ -69,7 +78,7 @@ serve(async (req) => {
       .maybeSingle();
 
     /*
-    Call your AI module
+    Call AI
     */
 
     const aiResponse = await outfitModule.generateOutfit({
@@ -85,36 +94,38 @@ serve(async (req) => {
     try {
       const cleaned = extractJSON(aiResponse.text);
 
-      if (!cleaned) {
-        throw new Error("AI returned empty response");
-      }
+      if (!cleaned) throw new Error("AI returned empty response");
 
       parsed = JSON.parse(cleaned);
+
     } catch (e) {
+
       console.error("AI returned invalid JSON:", aiResponse.text);
       throw new Error("AI returned invalid response");
+
     }
 
+    /*
+    Match AI items with wardrobe
+    */
+
     const wardrobeMap = new Map(
-      wardrobeItems.map((item) => [item.id, item])
+      wardrobeMapped.map((item: any) => [item.id, item])
     );
-    
+
     const items = (parsed.items || [])
       .map((aiItem: any) => wardrobeMap.get(aiItem.id))
       .filter(Boolean)
       .map((item: any) => ({
         id: item.id,
         name: item.name,
-        category: item.category.toLowerCase(),
+        category: (item.category ?? "").toLowerCase(),
         color: item.color,
         imageUrl: item.image_url
       }));
 
-      console.log("Matched items:", items);
-    
     const outfit = {
-      id: crypto.randomUUID(),
-      items: items,
+      items,
       occasion,
       formality,
       stylingNotes: parsed.stylingNotes || "",
@@ -122,16 +133,35 @@ serve(async (req) => {
     };
 
     /*
-    return new Response(
-      JSON.stringify(aiResponse),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
-    );
+    Store generation (AI memory)
     */
 
+    const { data: generation, error: genError } = await supabase
+      .from("outfit_generations")
+      .insert({
+        user_id: user.id,
+        occasion,
+        formality,
+        weather_temperature: null,
+        weather_condition: profile?.climate ?? null,
+        generated_items: items,
+        confidence: outfit.confidence,
+        accepted: false
+      })
+      .select("id")
+      .single();
+
+    if (genError) {
+      console.error("Failed storing generation:", genError);
+    }
+
+    const response = {
+      ...outfit,
+      generationId: generation?.id
+    };
+
     return new Response(
-      JSON.stringify(outfit),
+      JSON.stringify(response),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       }

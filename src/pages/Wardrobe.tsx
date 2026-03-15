@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { WardrobeItemDetail } from "@/components/WardrobeItemDetails";
+import { fetchWardrobeItems } from "@/lib/services/wardrobeService";
 
 
 // Categories state (fetched from DB)
@@ -61,19 +62,10 @@ export default function Wardrobe() {
 
   const fetchItems = async () => {
     if (!user) return;
-    // Join with clothing_categories to get category name
-    const { data } = await supabase
-      .from("wardrobe_items")
-      .select("id, name, category_id, color, image_url, clothing_categories(name)")
-      .order("created_at", { ascending: false });
-    if (data) {
-      // Map category name for display
-      setItems(
-        data.map((item: any) => ({
-          ...item,
-          category_name: item.clothing_categories?.name || null,
-        }))
-      );
+    const items = await fetchWardrobeItems();
+
+    if (items) {
+      setItems(items);
     }
     setLoading(false);
   };
