@@ -2,8 +2,9 @@ import { createClient } from '@supabase/supabase-js';
 import { describe, it, expect } from 'vitest';
 
 // You must set these environment variables in your test environment for this test to work
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+// Use proper VITE-prefixed environment variables
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY;
 
 describe('Supabase integration', () => {
   it('should connect and fetch data from Supabase', async () => {
