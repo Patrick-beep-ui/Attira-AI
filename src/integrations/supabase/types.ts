@@ -16,103 +16,259 @@ export type Database = {
     Tables: {
       profiles: {
         Row: {
+          id: string
+          user_id: string
           body_type: string | null
-          climate: string | null
-          created_at: string
-          id: string
           preferred_fit: string | null
-          style_preferences: string[] | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          body_type?: string | null
-          climate?: string | null
-          created_at?: string
-          id?: string
-          preferred_fit?: string | null
-          style_preferences?: string[] | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          body_type?: string | null
-          climate?: string | null
-          created_at?: string
-          id?: string
-          preferred_fit?: string | null
-          style_preferences?: string[] | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      saved_outfits: {
-        Row: {
-          confidence: number | null
+          height_cm: number | null
+          weight_kg: number | null
+          country_code: string | null
+          city: string | null
+          latitude: number | null
+          longitude: number | null
+          timezone: string | null
           created_at: string
-          formality: string | null
-          id: string
-          items: Json
-          occasion: string
-          styling_notes: string | null
-          user_id: string
+          updated_at: string
         }
         Insert: {
-          confidence?: number | null
-          created_at?: string
-          formality?: string | null
           id?: string
-          items?: Json
-          occasion: string
-          styling_notes?: string | null
           user_id: string
+          body_type?: string | null
+          preferred_fit?: string | null
+          height_cm?: number | null
+          weight_kg?: number | null
+          country_code?: string | null
+          city?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          timezone?: string | null
+          created_at?: string
+          updated_at?: string
         }
         Update: {
-          confidence?: number | null
-          created_at?: string
-          formality?: string | null
           id?: string
-          items?: Json
-          occasion?: string
-          styling_notes?: string | null
           user_id?: string
+          body_type?: string | null
+          preferred_fit?: string | null
+          height_cm?: number | null
+          weight_kg?: number | null
+          country_code?: string | null
+          city?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          timezone?: string | null
+          created_at?: string
+          updated_at?: string
         }
         Relationships: []
       }
       wardrobe_items: {
         Row: {
-          category: string
-          color: string | null
-          created_at: string
-          fabric: string | null
           id: string
-          image_url: string | null
-          name: string
-          season: string | null
           user_id: string
+          name: string
+          category_id: number | null
+          color: string | null
+          fabric: string | null
+          size: string | null
+          brand: string | null
+          image_url: string | null
+          created_at: string
         }
         Insert: {
-          category: string
-          color?: string | null
-          created_at?: string
-          fabric?: string | null
           id?: string
-          image_url?: string | null
-          name: string
-          season?: string | null
           user_id: string
+          name: string
+          category_id?: number | null
+          color?: string | null
+          fabric?: string | null
+          size?: string | null
+          brand?: string | null
+          image_url?: string | null
+          created_at?: string
         }
         Update: {
-          category?: string
-          color?: string | null
-          created_at?: string
-          fabric?: string | null
           id?: string
-          image_url?: string | null
-          name?: string
-          season?: string | null
           user_id?: string
+          name?: string
+          category_id?: number | null
+          color?: string | null
+          fabric?: string | null
+          size?: string | null
+          brand?: string | null
+          image_url?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      outfits: {
+        Row: {
+          id: string
+          user_id: string
+          occasion: string | null
+          formality: string | null
+          confidence: number | null
+          styling_notes: string | null
+          created_at: string
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          occasion?: string | null
+          formality?: string | null
+          confidence?: number | null
+          styling_notes?: string | null
+          created_at?: string
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          occasion?: string | null
+          formality?: string | null
+          confidence?: number | null
+          styling_notes?: string | null
+          created_at?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      outfit_items: {
+        Row: {
+          id: string
+          outfit_id: string
+          wardrobe_item_id: string
+          layer_order: number | null
+        }
+        Insert: {
+          id?: string
+          outfit_id: string
+          wardrobe_item_id: string
+          layer_order?: number | null
+        }
+        Update: {
+          id?: string
+          outfit_id?: string
+          wardrobe_item_id?: string
+          layer_order?: number | null
+        }
+        Relationships: []
+      }
+      style_categories: {
+        Row: {
+          id: number
+          name: string
+        }
+        Insert: {
+          id?: number
+          name: string
+        }
+        Update: {
+          id?: number
+          name?: string
+        }
+        Relationships: []
+      }
+      profile_style_preferences: {
+        Row: {
+          profile_id: string
+          style_category_id: number
+        }
+        Insert: {
+          profile_id: string
+          style_category_id: number
+        }
+        Update: {
+          profile_id?: string
+          style_category_id?: number
+        }
+        Relationships: []
+      }
+      clothing_categories: {
+        Row: {
+          id: number
+          name: string
+          parent_category_id: number | null
+        }
+        Insert: {
+          id?: number
+          name: string
+          parent_category_id?: number | null
+        }
+        Update: {
+          id?: number
+          name?: string
+          parent_category_id?: number | null
+        }
+        Relationships: []
+      }
+      outfit_generations: {
+        Row: {
+          id: string
+          user_id: string | null
+          occasion: string | null
+          formality: string | null
+          weather_temperature: number | null
+          weather_condition: string | null
+          generated_items: Json | null
+          confidence: number | null
+          accepted: boolean | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          occasion?: string | null
+          formality?: string | null
+          weather_temperature?: number | null
+          weather_condition?: string | null
+          generated_items?: Json | null
+          confidence?: number | null
+          accepted?: boolean | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          occasion?: string | null
+          formality?: string | null
+          weather_temperature?: number | null
+          weather_condition?: string | null
+          generated_items?: Json | null
+          confidence?: number | null
+          accepted?: boolean | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      item_tags: {
+        Row: {
+          id: number
+          name: string
+        }
+        Insert: {
+          id?: number
+          name: string
+        }
+        Update: {
+          id?: number
+          name?: string
+        }
+        Relationships: []
+      }
+      item_tag_map: {
+        Row: {
+          item_id: string
+          tag_id: number
+        }
+        Insert: {
+          item_id: string
+          tag_id: number
+        }
+        Update: {
+          item_id?: string
+          tag_id?: number
         }
         Relationships: []
       }

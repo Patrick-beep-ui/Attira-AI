@@ -11,7 +11,8 @@ import { Loader2, Trash2, Save } from "lucide-react";
 interface WardrobeItem {
   id: string;
   name: string;
-  category: string;
+  category_id: number | null;
+  category_name?: string;
   color: string | null;
   image_url: string | null;
 }
@@ -93,7 +94,7 @@ export function WardrobeItemDetail({ item, open, onOpenChange, onUpdated }: Prop
             <Label className="text-body-sm">Color</Label>
             <Input className="rounded-xl" placeholder="e.g. Navy Blue" value={color} onChange={(e) => setColor(e.target.value)} />
           </div>
-          <p className="text-caption text-muted-foreground">Category: {item.category}</p>
+          <p className="text-caption text-muted-foreground">Category: {item.category_name || "Unknown"}</p>
 
           <Button onClick={handleSave} disabled={saving} className="w-full rounded-xl py-5">
             {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}

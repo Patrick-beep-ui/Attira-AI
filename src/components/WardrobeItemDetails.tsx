@@ -11,8 +11,12 @@ import { Loader2, Trash2, Save } from "lucide-react";
 interface WardrobeItem {
   id: string;
   name: string;
-  category: string;
+  category_id: number | null;
+  category_name?: string;
   color: string | null;
+  fabric?: string | null;
+  size?: string | null;
+  brand?: string | null;
   image_url: string | null;
 }
 
@@ -23,9 +27,13 @@ interface Props {
   onUpdated: () => void;
 }
 
+
 export function WardrobeItemDetail({ item, open, onOpenChange, onUpdated }: Props) {
   const [name, setName] = useState("");
   const [color, setColor] = useState("");
+  const [fabric, setFabric] = useState("");
+  const [size, setSize] = useState("");
+  const [brand, setBrand] = useState("");
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -35,6 +43,9 @@ export function WardrobeItemDetail({ item, open, onOpenChange, onUpdated }: Prop
     setPrevId(item.id);
     setName(item.name);
     setColor(item.color || "");
+    setFabric(item.fabric || "");
+    setSize(item.size || "");
+    setBrand(item.brand || "");
   }
 
   if (!item) return null;
@@ -44,7 +55,13 @@ export function WardrobeItemDetail({ item, open, onOpenChange, onUpdated }: Prop
     setSaving(true);
     const { error } = await supabase
       .from("wardrobe_items")
-      .update({ name: name.trim(), color: color.trim() || null })
+      .update({
+        name: name.trim(),
+        color: color.trim() || null,
+        fabric: fabric.trim() || null,
+        size: size.trim() || null,
+        brand: brand.trim() || null,
+      })
       .eq("id", item.id);
     setSaving(false);
     if (error) return toast.error(error.message);
@@ -93,7 +110,19 @@ export function WardrobeItemDetail({ item, open, onOpenChange, onUpdated }: Prop
             <Label className="text-body-sm">Color</Label>
             <Input className="rounded-xl" placeholder="e.g. Navy Blue" value={color} onChange={(e) => setColor(e.target.value)} />
           </div>
-          <p className="text-caption text-muted-foreground">Category: {item.category}</p>
+          <div className="space-y-2">
+            <Label className="text-body-sm">Fabric</Label>
+            <Input className="rounded-xl" placeholder="e.g. Cotton, Wool" value={fabric} onChange={(e) => setFabric(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-body-sm">Size</Label>
+            <Input className="rounded-xl" placeholder="e.g. M, 32W 30L" value={size} onChange={(e) => setSize(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-body-sm">Brand</Label>
+            <Input className="rounded-xl" placeholder="e.g. Uniqlo, Nike" value={brand} onChange={(e) => setBrand(e.target.value)} />
+          </div>
+          <p className="text-caption text-muted-foreground">Category: {item.category_name || "Unknown"}</p>
 
           <Button onClick={handleSave} disabled={saving} className="w-full rounded-xl py-5">
             {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}

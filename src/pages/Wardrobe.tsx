@@ -13,19 +13,28 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { WardrobeItemDetail } from "@/components/WardrobeItemDetails";
 
-const categories = ["All", "Tops", "Bottoms", "Shoes", "Accessories", "Outerwear"];
+
+// Categories state (fetched from DB)
+interface Category {
+  id: number;
+  name: string;
+  parent_category_id: number | null;
+}
 
 interface WardrobeItem {
   id: string;
   name: string;
-  category: string;
+  category_id: number | null;
   color: string | null;
   image_url: string | null;
+  // Optionally, join category name for display
+  category_name?: string;
 }
 
 export default function Wardrobe() {
   const { user } = useAuth();
-  const [activeCategory, setActiveCategory] = useState("All");
+
+  const [activeCategory, setActiveCategory] = useState<number>(0); // 0 = All
   const [items, setItems] = useState<WardrobeItem[]>([]);
   const [addOpen, setAddOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -33,23 +42,55 @@ export default function Wardrobe() {
   const [detailItem, setDetailItem] = useState<WardrobeItem | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
 
+  // Category state
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [parentCategories, setParentCategories] = useState<Category[]>([]);
+  const [subCategories, setSubCategories] = useState<Category[]>([]);
+
   // Form state
   const [name, setName] = useState("");
-  const [category, setCategory] = useState("");
+  const [parentCategoryId, setParentCategoryId] = useState<number | null>(null);
+  const [categoryId, setCategoryId] = useState<number | null>(null);
   const [color, setColor] = useState("");
+  const [fabric, setFabric] = useState("");
+  const [size, setSize] = useState("");
+  const [brand, setBrand] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchItems = async () => {
     if (!user) return;
+    // Join with clothing_categories to get category name
     const { data } = await supabase
       .from("wardrobe_items")
-      .select("id, name, category, color, image_url")
+      .select("id, name, category_id, color, image_url, clothing_categories(name)")
       .order("created_at", { ascending: false });
-    if (data) setItems(data);
+    if (data) {
+      // Map category name for display
+      setItems(
+        data.map((item: any) => ({
+          ...item,
+          category_name: item.clothing_categories?.name || null,
+        }))
+      );
+    }
     setLoading(false);
   };
+
+
+  // Fetch categories from DB
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const { data } = await supabase.from("clothing_categories").select("id, name, parent_category_id");
+      if (data) {
+        setCategories(data);
+        setParentCategories(data.filter((c: Category) => c.parent_category_id === null));
+        setSubCategories(data.filter((c: Category) => c.parent_category_id !== null));
+      }
+    };
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     fetchItems();
@@ -66,15 +107,20 @@ export default function Wardrobe() {
 
   const resetForm = () => {
     setName("");
-    setCategory("");
+    setParentCategoryId(null);
+    setCategoryId(null);
     setColor("");
+    setFabric("");
+    setSize("");
+    setBrand("");
     setImageFile(null);
     setImagePreview(null);
   };
 
+
   const handleAdd = async () => {
     if (!user) return toast.error("Please sign in first");
-    if (!name || !category) return toast.error("Name and category are required");
+    if (!name || !categoryId || !parentCategoryId) return toast.error("Name, parent and subcategory are required");
 
     setSaving(true);
     let image_url: string | null = null;
@@ -98,8 +144,11 @@ export default function Wardrobe() {
     const { error } = await supabase.from("wardrobe_items").insert({
       user_id: user.id,
       name,
-      category,
+      category_id: categoryId,
       color: color || null,
+      fabric: fabric || null,
+      size: size || null,
+      brand: brand || null,
       image_url,
     });
 
@@ -112,7 +161,14 @@ export default function Wardrobe() {
     fetchItems();
   };
 
-  const filtered = activeCategory === "All" ? items : items.filter((i) => i.category === activeCategory);
+  // Filtering: if a parent category is selected, show all items whose category is a subcategory of that parent
+  const filtered = activeCategory === 0
+    ? items
+    : items.filter((i) => {
+        // Find subcategories for the selected parent
+        const subIds = subCategories.filter((c) => c.parent_category_id === activeCategory).map((c) => c.id);
+        return subIds.includes(i.category_id!);
+      });
 
   return (
     <AppShell>
@@ -120,8 +176,9 @@ export default function Wardrobe() {
 
       {/* Category Filters */}
       <div className="flex gap-2 overflow-x-auto px-4 pb-3 pt-1 scrollbar-none">
-        {categories.map((c) => (
-          <TagChip key={c} label={c} active={activeCategory === c} onClick={() => setActiveCategory(c)} />
+        <TagChip key={0} label="All" active={activeCategory === 0} onClick={() => setActiveCategory(0)} />
+        {parentCategories.map((c) => (
+          <TagChip key={c.id} label={c.name} active={activeCategory === c.id} onClick={() => setActiveCategory(c.id)} />
         ))}
       </div>
 
@@ -149,7 +206,7 @@ export default function Wardrobe() {
               </div>
               <div className="p-3">
                 <p className="text-body-sm font-medium text-foreground">{item.name}</p>
-                <p className="text-caption text-muted-foreground">{item.category}</p>
+                <p className="text-caption text-muted-foreground">{item.category_name || ""}</p>
               </div>
             </div>
           ))
@@ -163,11 +220,11 @@ export default function Wardrobe() {
             <Plus className="h-6 w-6" />
           </button>
         </DialogTrigger>
-        <DialogContent className="mx-4 max-w-sm rounded-2xl">
-          <DialogHeader>
+        <DialogContent className="mx-4 max-w-sm rounded-2xl max-h-[80vh] p-0 flex flex-col">
+          <DialogHeader className="px-6 pt-6">
             <DialogTitle className="font-display text-display-3">Add Item</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 pt-2">
+          <div className="space-y-4 pt-2 px-6 pb-6 overflow-y-auto" style={{ maxHeight: 'calc(80vh - 64px)' }}>
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
             <div
               onClick={() => fileInputRef.current?.click()}
@@ -187,19 +244,45 @@ export default function Wardrobe() {
               <Input placeholder="e.g. Blue Oxford Shirt" className="rounded-xl" value={name} onChange={(e) => setName(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label className="text-body-sm">Category</Label>
-              <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select category" /></SelectTrigger>
+              <Label className="text-body-sm">Parent Category</Label>
+              <Select value={parentCategoryId ? String(parentCategoryId) : ""} onValueChange={(val) => {
+                setParentCategoryId(Number(val));
+                setCategoryId(null); // Reset subcategory
+              }}>
+                <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select parent category" /></SelectTrigger>
                 <SelectContent>
-                  {categories.filter((c) => c !== "All").map((c) => (
-                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  {parentCategories.map((c) => (
+                    <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-body-sm">Color (optional)</Label>
+              <Label className="text-body-sm">Subcategory</Label>
+              <Select value={categoryId ? String(categoryId) : ""} onValueChange={(val) => setCategoryId(Number(val))} disabled={!parentCategoryId}>
+                <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select subcategory" /></SelectTrigger>
+                <SelectContent>
+                  {subCategories.filter((c) => c.parent_category_id === parentCategoryId).map((c) => (
+                    <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-body-sm">Color <span className="text-muted-foreground">(optional)</span></Label>
               <Input placeholder="e.g. Navy Blue" className="rounded-xl" value={color} onChange={(e) => setColor(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-body-sm">Fabric <span className="text-muted-foreground">(optional, recommended)</span></Label>
+              <Input placeholder="e.g. Cotton, Wool" className="rounded-xl" value={fabric} onChange={(e) => setFabric(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-body-sm">Size <span className="text-muted-foreground">(optional, recommended)</span></Label>
+              <Input placeholder="e.g. M, 32W 30L" className="rounded-xl" value={size} onChange={(e) => setSize(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-body-sm">Brand <span className="text-muted-foreground">(optional, recommended)</span></Label>
+              <Input placeholder="e.g. Uniqlo, Nike" className="rounded-xl" value={brand} onChange={(e) => setBrand(e.target.value)} />
             </div>
             <Button onClick={handleAdd} disabled={saving} className="w-full rounded-xl py-5">
               {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
