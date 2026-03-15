@@ -40,12 +40,23 @@ serve(async (req) => {
 
     const { data: wardrobeItems, error: wardrobeError } = await supabase
       .from("wardrobe_items")
-      .select("id, name, category, color, season, fabric, image_url")
+      .select("id, name, color, image_url, fabric, season, category_id, clothing_categories(name)")
       .eq("user_id", user.id);
-
+    
     if (wardrobeError) throw new Error("Failed to fetch wardrobe");
 
-    console.log("Wardrobe items:", wardrobeItems);
+    // Map to a simple shape for the AI prompt, deriving a readable category name from the refactored schema
+    const wardrobeMapped = wardrobeItems.map((item: any) => ({
+      id: item.id,
+      name: item.name,
+      category: item.clothing_categories?.name ?? null,
+      color: item.color ?? null,
+      image_url: item.image_url ?? null,
+      fabric: item.fabric ?? null,
+      season: item.season ?? null,
+    }));
+
+    console.log("Wardrobe items:", wardrobeMapped);
 
     /*
     Fetch profile
@@ -62,7 +73,7 @@ serve(async (req) => {
     */
 
     const aiResponse = await outfitModule.generateOutfit({
-      wardrobe: wardrobeItems,
+      wardrobe: wardrobeMapped,
       profile,
       occasion,
       formality,

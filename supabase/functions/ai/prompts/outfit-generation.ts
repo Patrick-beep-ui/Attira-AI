@@ -2,14 +2,14 @@ export function outfitGenerationPrompt(data: any) {
 
     const wardrobeList = data.wardrobe?.length
       ? data.wardrobe
-          .map(
-            (item: any) =>
-              `- id: ${item.id}, ${item.name}, (category: ${item.category}, color: ${
-                item.color || "unknown"
-              }, season: ${item.season || "all-season"}, fabric: ${
-                item.fabric || "unknown"
-              })`
-          )
+          .map((item: any) => {
+            const categoryName = item.category ?? item.clothing_categories?.name ?? item.category_name ?? "unknown";
+            return `- id: ${item.id}, ${item.name}, (category: ${categoryName}, color: ${
+              item.color ?? "unknown"
+            }, season: ${item.season ?? "all-season"}, fabric: ${
+              item.fabric ?? "unknown"
+            })`;
+          })
           .join("\n")
       : "No items in wardrobe yet.";
   
