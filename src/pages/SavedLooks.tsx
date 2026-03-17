@@ -43,25 +43,58 @@ export default function SavedLooks() {
     if (!user) return;
     const fetchLooks = async () => {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("saved_outfits")
-        .select("*")
+      // 1) Fetch outfits from the new schema
+      const { data: outfits, error: outfitsError } = await supabase
+        .from("outfits")
+        .select("id, occasion, formality, styling_notes, confidence, created_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
-      if (!error && data) {
-        setLooks(
-          data.map((row) => ({
-            id: row.id,
-            occasion: row.occasion,
-            formality: (row as any).formality || "balanced",
-            items: (row.items as any[]) || [],
-            stylingNotes: row.styling_notes || "",
-            confidence: row.confidence ?? 0,
-            createdAt: row.created_at,
-          }))
-        );
+      if (outfitsError) {
+        console.error("Failed to fetch outfits:", outfitsError);
+        setLoading(false);
+        return;
       }
+
+      // 2) For each outfit, fetch its items from outfit_items joined to wardrobe_items
+      const outfitsWithItems = await Promise.all(
+        outfits.map(async (o: any) => {
+          const { data: itemRows, error: itemsError } = await supabase
+            .from("outfit_items")
+            .select("wardrobe_item_id, wardrobe_items(id, name, color, image_url, category_id, clothing_categories(name)))")
+            .eq("outfit_id", o.id);
+          if (itemsError) {
+            console.error("Failed to fetch items for outfit", o.id, itemsError);
+            return { ...o, items: [] };
+          }
+          const items = (itemRows ?? []).map((r: any) => {
+            const w = r.wardrobe_items ?? {};
+            const categoryName = w.clothing_categories?.name ?? "";
+            const categoryValue = (categoryName || "").toLowerCase();
+            return {
+              id: w.id ?? r.wardrobe_item_id,
+              name: w.name ?? "",
+              category: categoryValue,
+              color: w.color ?? null,
+              imageUrl: w.image_url ?? null
+            };
+          });
+          return { id: o.id, occasion: o.occasion, formality: o.formality ?? "balanced", stylingNotes: o.styling_notes ?? "", confidence: o.confidence ?? 0, createdAt: o.created_at, items };
+        })
+      );
+
+      // 3) Normalize to SavedLook shape
+      setLooks(
+        outfitsWithItems.map((o: any) => ({
+          id: o.id,
+          occasion: o.occasion,
+          formality: o.formality,
+          items: o.items,
+          stylingNotes: o.stylingNotes,
+          confidence: o.confidence,
+          createdAt: o.createdAt,
+        }))
+      );
       setLoading(false);
     };
     fetchLooks();
@@ -75,7 +108,8 @@ export default function SavedLooks() {
   const handleDelete = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
-    const { error } = await supabase.from("saved_outfits").delete().eq("id", deleteTarget);
+    // Delete from new outfits table (and cascading items if configured)
+    const { error } = await (supabase as any).from("outfits").delete().eq("id", deleteTarget);
     if (error) {
       toast.error("Failed to delete look.");
     } else {
@@ -193,6 +227,7 @@ export default function SavedLooks() {
                 <Trash2 className="h-4 w-4" />
                 Delete Look
               </Button>
+              <div className="h-20" aria-hidden="true" />
             </motion.div>
           </motion.div>
         )}
