@@ -35,6 +35,7 @@ export default function Auth() {
 
     if (mode === "signup") {
       toast.success("Check your email to confirm your account");
+      //navigate("/profile-setup");
     } else {
       navigate("/home");
     }
