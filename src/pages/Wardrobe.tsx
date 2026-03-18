@@ -60,6 +60,10 @@ export default function Wardrobe() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+    const hasSubcategories = parentCategoryId
+    ? subCategories.some((c) => c.parent_category_id === parentCategoryId)
+    : false;
+
   const fetchItems = async () => {
     if (!user) return;
     const items = await fetchWardrobeItems();
@@ -80,6 +84,7 @@ export default function Wardrobe() {
         setParentCategories(data.filter((c: Category) => c.parent_category_id === null));
         setSubCategories(data.filter((c: Category) => c.parent_category_id !== null));
       }
+      console.log("Fetched categories:", categories);
     };
     fetchCategories();
   }, []);
@@ -112,7 +117,13 @@ export default function Wardrobe() {
 
   const handleAdd = async () => {
     if (!user) return toast.error("Please sign in first");
-    if (!name || !categoryId || !parentCategoryId) return toast.error("Name, parent and subcategory are required");
+
+    const hasSubcategory = parentCategoryId
+      ? subCategories.some((c) => c.parent_category_id === parentCategoryId)
+      : false;
+    
+    if (!name || !parentCategoryId) return toast.error("Name, and parent category are required");
+    if (hasSubcategory && !categoryId) return toast.error("subcategory is required for this parent category");
 
     setSaving(true);
     let image_url: string | null = null;
@@ -136,7 +147,7 @@ export default function Wardrobe() {
     const { error } = await supabase.from("wardrobe_items").insert({
       user_id: user.id,
       name,
-      category_id: categoryId,
+      category_id: hasSubcategory ? categoryId : parentCategoryId, 
       color: color || null,
       fabric: fabric || null,
       size: size || null,
@@ -154,13 +165,19 @@ export default function Wardrobe() {
   };
 
   // Filtering: if a parent category is selected, show all items whose category is a subcategory of that parent
-  const filtered = activeCategory === 0
-    ? items
-    : items.filter((i) => {
-        // Find subcategories for the selected parent
-        const subIds = subCategories.filter((c) => c.parent_category_id === activeCategory).map((c) => c.id);
-        return subIds.includes(i.category_id!);
-      });
+const filtered = activeCategory === 0
+  ? items
+  : items.filter((i) => {
+      // Subcategories of the selected parent
+      const subIds = subCategories
+        .filter((c) => c.parent_category_id === activeCategory)
+        .map((c) => c.id);
+
+      return (
+        subIds.includes(i.category_id!) || // subcategory match
+        i.category_id === activeCategory   // parent match (legacy or no-subcategory)
+      );
+    });
 
   return (
     <AppShell>
@@ -237,9 +254,19 @@ export default function Wardrobe() {
             </div>
             <div className="space-y-2">
               <Label className="text-body-sm">Parent Category</Label>
-              <Select value={parentCategoryId ? String(parentCategoryId) : ""} onValueChange={(val) => {
+              <Select 
+              value={parentCategoryId ? String(parentCategoryId) : ""} 
+              onValueChange={(val) => {
+                const parentId = Number(val);
                 setParentCategoryId(Number(val));
                 setCategoryId(null); // Reset subcategory
+
+                const subs = subCategories.filter(
+                  (c) => c.parent_category_id === parentId
+                );
+
+                setCategoryId(subs.length > 0 ? subs[0].id : null);
+
               }}>
                 <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select parent category" /></SelectTrigger>
                 <SelectContent>
@@ -251,7 +278,10 @@ export default function Wardrobe() {
             </div>
             <div className="space-y-2">
               <Label className="text-body-sm">Subcategory</Label>
-              <Select value={categoryId ? String(categoryId) : ""} onValueChange={(val) => setCategoryId(Number(val))} disabled={!parentCategoryId}>
+              <Select 
+              value={categoryId ? String(categoryId) : ""}
+               onValueChange={(val) => setCategoryId(Number(val))} 
+                disabled={!hasSubcategories}>
                 <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select subcategory" /></SelectTrigger>
                 <SelectContent>
                   {subCategories.filter((c) => c.parent_category_id === parentCategoryId).map((c) => (
