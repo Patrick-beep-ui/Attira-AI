@@ -17,7 +17,11 @@ export default function OutfitResult() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const outfit = location.state?.outfit as GeneratedOutfit | undefined;
+  console.log("🎬 OUTFIT RESULT:", outfit);
+  // computed above
   const [saving, setSaving] = useState(false);
+
+  const compositionUrl = (outfit as any)?.compositionUrl ?? (outfit as any)?.composition_url ?? null;
 
   if (!outfit) {
     return (
@@ -111,14 +115,55 @@ export default function OutfitResult() {
   };
 
   return (
+    
     <AppShell>
+      { /*
+      {compositionUrl && (
+        <div className="mb-4">
+          <img src={compositionUrl} alt="Outfit composition" style={{ width: '100%', maxHeight: 360, objectFit: 'cover', borderRadius: 12 }} />
+        </div>
+      )}
+      {compositionUrl ? (
+        <div className="mb-4">
+          <img src={compositionUrl} alt="Outfit composition" style={{ width: '100%', maxHeight: 360, objectFit: 'cover', borderRadius: 12 }} />
+        </div>
+      ) : null}
       <HeaderBar
         title="Your Look"
         showBack
         right={<AiBadge label={`${Math.round(outfit.confidence * 100)}% match`} />}
       />
+    */}
 
       <div className="space-y-6 px-4 pt-4 pb-8">
+
+        {/*compositionUrl && (
+          <div className="mb-4">
+            <img
+              src={compositionUrl}
+              alt="Outfit composition"
+              style={{
+                width: "100%",
+                maxHeight: 360,
+                objectFit: "cover",
+                borderRadius: 12
+              }}
+            />
+          </div>
+        )*/}
+
+        {compositionUrl && (
+          <div className="mb-4 w-full max-w-sm mx-auto">
+            <div
+              className="w-full max-w-[350px] aspect-[5/6] mx-auto rounded-lg border svg-container"
+              dangerouslySetInnerHTML={{
+                __html: decodeURIComponent(
+                  compositionUrl.replace("data:image/svg+xml;utf8,", "")
+                )
+              }}
+            />
+          </div>
+        )}
 
         <div className="space-y-3">
           {outfit.items?.map((item, i) => (

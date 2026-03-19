@@ -15,6 +15,9 @@ export interface GeneratedOutfit {
   formality?: string;
   stylingNotes: string;
   confidence: number;
+  compositionUrl?: string;
+ composition_url?: string;
+  generationId?: string;
 }
 
 export async function generateOutfit(occasion: string, formality: string = "balanced"): Promise<GeneratedOutfit> {
