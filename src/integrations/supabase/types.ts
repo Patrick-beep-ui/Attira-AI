@@ -85,6 +85,8 @@ export type Database = {
           size?: string | null
           brand?: string | null
           image_url?: string | null
+          processed_image_url?: string | null
+          processing_status?: string | null
           created_at?: string
         }
         Update: {
@@ -97,6 +99,8 @@ export type Database = {
           size?: string | null
           brand?: string | null
           image_url?: string | null
+          processed_image_url?: string | null
+          processing_status?: string | null
           created_at?: string
         }
         Relationships: []

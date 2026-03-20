@@ -15,7 +15,7 @@ export type ImageLayer = {
   rotation?: number;
 };
 
-// Replace your buildOutfitLayout logic with this coordinate system
+
 export function buildOutfitLayout(items: OutfitItem[]) {
   const CANVAS_WIDTH = 500;
   const CANVAS_HEIGHT = 600;
@@ -26,34 +26,89 @@ export function buildOutfitLayout(items: OutfitItem[]) {
     outerwear: { w: 260, h: 260 },
     tops: { w: 240, h: 240 },
     bottoms: { w: 240, h: 260 },
-    shoes: { w: 220, h: 140 },
-    accessories: { w: 90, h: 90 }
+    shoes: { w: 200, h: 130 },
+    accessories: { w: 80, h: 80 }
   };
 
   const layers: ImageLayer[] = [];
-  const getRotation = () => (Math.random() - 0.5) * 5;
 
-  // 👉 Extract items
+  const rand = (min: number, max: number) =>
+    Math.random() * (max - min) + min;
+
+  const getRotation = () => rand(-3, 3);
+
+  // 👉 Extract
   const shoes = items.find(i => i.category === "shoes");
   const tops = items.find(i => i.category === "tops");
   const bottoms = items.find(i => i.category === "bottoms");
   const outerwear = items.find(i => i.category === "outerwear");
   const accessories = items.filter(i => i.category === "accessories");
 
-  if (!tops) console.warn("⚠️ No tops found", items);
-  if (!bottoms) console.warn("⚠️ No bottoms found", items);
+  /*
+    🎯 1. BOTTOMS (anchor piece)
+  */
+  if (bottoms) {
+    const size = sizeMap.bottoms;
 
-  // 👉 1. SHOES (always bottom)
-  let shoesTopY = CANVAS_HEIGHT - 160;
+    layers.push({
+      id: bottoms.id,
+      imageUrl: bottoms.imageUrl,
+      x: centerX - size.w / 2 + rand(-10, 10),
+      y: 250,
+      w: size.w,
+      h: size.h,
+      z: 20,
+      rotation: getRotation()
+    });
+  }
 
+  /*
+    🎯 2. TOP (slightly above + overlap)
+  */
+  if (tops) {
+    const size = sizeMap.tops;
+
+    layers.push({
+      id: tops.id,
+      imageUrl: tops.imageUrl,
+      x: centerX - size.w / 2 + rand(-20, 20),
+      y: 100,
+      w: size.w,
+      h: size.h,
+      z: 30,
+      rotation: getRotation()
+    });
+  }
+
+  /*
+    🎯 3. OUTERWEAR (optional top layer)
+  */
+  if (outerwear) {
+    const size = sizeMap.outerwear;
+
+    layers.push({
+      id: outerwear.id,
+      imageUrl: outerwear.imageUrl,
+      x: centerX - size.w / 2 + rand(-15, 15),
+      y: 80,
+      w: size.w,
+      h: size.h,
+      z: 40,
+      rotation: getRotation()
+    });
+  }
+
+  /*
+    🎯 4. SHOES (slight horizontal split)
+  */
   if (shoes) {
     const size = sizeMap.shoes;
 
     layers.push({
       id: shoes.id,
       imageUrl: shoes.imageUrl,
-      x: centerX - size.w / 2,
-      y: shoesTopY,
+      x: centerX - size.w / 2 + (Math.random() * 20 - 10), // slight offset
+      y: 480,
       w: size.w,
       h: size.h,
       z: 10,
@@ -61,58 +116,22 @@ export function buildOutfitLayout(items: OutfitItem[]) {
     });
   }
 
-  // 👉 2. ACCESSORIES (top right)
-  accessories.forEach((item, idx) => {
+  /*
+    🎯 5. ACCESSORIES (floating, dynamic)
+  */
+  accessories.forEach((item, i) => {
     const size = sizeMap.accessories;
 
     layers.push({
       id: item.id,
       imageUrl: item.imageUrl,
-      x: centerX + 90,
-      y: 40 + idx * 100,
+      x: centerX + 100 + rand(-20, 20),
+      y: 40 + i * 90,
       w: size.w,
       h: size.h,
-      z: 100 + idx,
+      z: 100 + i,
       rotation: getRotation()
     });
-  });
-
-  // 👉 3. CENTER STACK (tops, bottoms, outerwear)
-  const centerItems = [outerwear, tops, bottoms].filter(Boolean);
-
-  const totalHeight = centerItems.reduce((acc, item) => {
-    const size = sizeMap[item!.category];
-    return acc + size.h;
-  }, 0);
-
-  const spacing = 10;
-
-  const totalSpacing = spacing * (centerItems.length - 1);
-
-  const availableTop = 40; // below accessories
-  const availableBottom = shoesTopY - 20;
-
-  const availableHeight = availableBottom - availableTop;
-
-  // 👉 Center vertically
-  let currentY =
-    availableTop + (availableHeight - (totalHeight + totalSpacing)) / 2;
-
-  centerItems.forEach((item, index) => {
-    const size = sizeMap[item!.category];
-
-    layers.push({
-      id: item!.id,
-      imageUrl: item!.imageUrl,
-      x: centerX - size.w / 2,
-      y: currentY,
-      w: size.w,
-      h: size.h,
-      z: 20 + index * 10,
-      rotation: getRotation()
-    });
-
-    currentY += size.h + spacing;
   });
 
   return {

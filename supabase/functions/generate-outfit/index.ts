@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
 import { outfitModule } from "../ai/index.ts";
 import { extractJSON } from "../ai/helpers/cleanJSON.ts";
 import { composeOutfitSVG } from "../ai/modules/CanvasComposer.ts";
@@ -12,30 +13,67 @@ const corsHeaders = {
 };
 
 /*
-   CATEGORY NORMALIZER (single source of truth)
+  CATEGORY NORMALIZER
 */
 const normalizeCategory = (cat: string | null) => {
   if (!cat) return null;
 
   const c = cat.toLowerCase();
 
-  if (c === "top" || c === "tops") return "tops";
-  if (c === "bottom" || c === "bottoms") return "bottoms";
-  if (c === "shoe" || c === "shoes") return "shoes";
-  if (c === "accessory" || c === "accessories") return "accessories";
+  if (["top", "tops"].includes(c)) return "tops";
+  if (["bottom", "bottoms"].includes(c)) return "bottoms";
+  if (["shoe", "shoes"].includes(c)) return "shoes";
+  if (["accessory", "accessories"].includes(c)) return "accessories";
   if (c === "outerwear") return "outerwear";
 
   return c;
 };
 
-serve(async (req) => {
+const getMainCategory = (item: any) => {
+  const sub = item.clothing_categories;
+  const parent = sub?.parent;
 
+  const categoryName = parent?.name || sub?.name;
+
+  return normalizeCategory(categoryName);
+};
+
+/*
+  IMAGE RESOLVER 
+*/
+const resolveImageUrl = (supabase: any, item: any): string | null => {
+  const imageToUse =
+    item.processed_image_url &&
+    item.processing_status === "done"
+      ? item.processed_image_url
+      : item.image_url;
+
+  if (!imageToUse) return null;
+
+  if (imageToUse.startsWith("http")) return imageToUse;
+
+  try {
+    const { data } = supabase
+      .storage
+      .from("wardrobe-images")
+      .getPublicUrl(imageToUse);
+
+    return data?.publicUrl ?? null;
+  } catch (e) {
+    console.error("URL conversion failed:", imageToUse, e);
+    return null;
+  }
+};
+
+serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-
+    /*
+      REQUEST
+    */
     const { occasion, formality } = await req.json();
 
     const authHeader = req.headers.get("Authorization");
@@ -49,13 +87,19 @@ serve(async (req) => {
       }
     );
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    /*
+      AUTH
+    */
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
     if (userError || !user) throw new Error("Unauthorized");
 
     /*
-    Fetch wardrobe
+      FETCH WARDROBE
     */
-
     const { data: wardrobeItems, error: wardrobeError } = await supabase
       .from("wardrobe_items")
       .select(`
@@ -63,66 +107,47 @@ serve(async (req) => {
         name,
         color,
         image_url,
+        processed_image_url,
+        processing_status,
         fabric,
         category_id,
         brand,
         size,
-        clothing_categories(name)
+        clothing_categories(name, parent_category_id, parent:parent_category_id(name))
       `)
       .eq("user_id", user.id);
 
     if (wardrobeError) {
       console.error("Wardrobe fetch failed:", wardrobeError);
-      throw new Error(`Failed to fetch wardrobe`);
+      throw new Error("Failed to fetch wardrobe");
     }
 
     /*
-    🔁 UPDATED: normalize category here
+      MAP WARDROBE 
     */
+    const wardrobeMapped = (wardrobeItems || []).map((item: any) => {
+      const publicUrl = resolveImageUrl(supabase, item);
 
-    const wardrobeMapped = wardrobeItems.map((item: any) => {
-
-      let publicUrl: string | null = null;
-
-      if (!item.image_url) {
-        return {
-          ...item,
-          image_url: null
-        };
-      }
-
-      if (item.image_url.startsWith("http")) {
-        publicUrl = item.image_url;
-      } else {
-        try {
-          const { data } = supabase
-            .storage
-            .from("wardrobe-images")
-            .getPublicUrl(item.image_url);
-
-          publicUrl = data?.publicUrl ?? null;
-        } catch (e) {
-          console.error("URL conversion failed:", item.image_url, e);
-        }
-      }
+      console.log({
+        sub: item.clothing_categories?.name,
+        parent: item.clothing_categories?.parent?.name,
+        final: getMainCategory(item)
+      });
 
       return {
         id: item.id,
         name: item.name,
-
-        // 🔥 FIX APPLIED HERE
-        category: normalizeCategory(item.clothing_categories?.name),
-
+        category: getMainCategory(item),
         color: item.color ?? null,
         image_url: publicUrl,
         fabric: item.fabric ?? null,
       };
     });
+    
 
     /*
-    Fetch profile
+      FETCH PROFILE
     */
-
     const { data: profile } = await supabase
       .from("profiles")
       .select("body_type, preferred_fit, climate, style_preferences")
@@ -130,15 +155,14 @@ serve(async (req) => {
       .maybeSingle();
 
     /*
-    Call AI
+      AI CALL
     */
-
     const aiResponse = await outfitModule.generateOutfit({
       wardrobe: wardrobeMapped,
       profile,
       occasion,
       formality,
-      climate: profile?.climate
+      climate: profile?.climate,
     });
 
     let parsed;
@@ -153,9 +177,8 @@ serve(async (req) => {
     }
 
     /*
-    🔁 UPDATED: normalize AGAIN here for safety
+      MAP AI → REAL ITEMS
     */
-
     const wardrobeMap = new Map(
       wardrobeMapped.map((item: any) => [item.id, item])
     );
@@ -166,43 +189,32 @@ serve(async (req) => {
       .map((item: any) => ({
         id: item.id,
         name: item.name,
-
-        // 🔥 FIX APPLIED HERE
         category: normalizeCategory(item.category),
-
         color: item.color,
-        imageUrl: item.image_url
+        imageUrl: item.image_url,
       }));
 
     /*
-    Compose
+      COMPOSITION
     */
-
     let compositionUrl: string | null = null;
 
     try {
       if (items.length > 0) {
-
         const { layers, width, height } = buildOutfitLayout(items);
 
-        console.log("LAYERS FOR COMPOSITION:", layers);
-        console.log("Items used for composition:", items);
+        console.log("LAYERS:", layers);
+        console.log("ITEMS:", items);
 
         compositionUrl = composeOutfitSVG(layers, width, height);
       }
     } catch (e) {
       console.error("Composition failed:", e);
-      compositionUrl = null;
     }
 
-    const outfit = {
-      items,
-      occasion,
-      formality,
-      stylingNotes: parsed.stylingNotes || "",
-      confidence: parsed.confidence || 0.5
-    };
-
+    /*
+      SAVE GENERATION
+    */
     const { data: generation } = await supabase
       .from("outfit_generations")
       .insert({
@@ -212,25 +224,31 @@ serve(async (req) => {
         weather_temperature: null,
         weather_condition: profile?.climate ?? null,
         generated_items: items,
-        confidence: outfit.confidence,
+        confidence: parsed.confidence || 0.5,
         accepted: false,
-        composition_url: compositionUrl
+        composition_url: compositionUrl,
       })
       .select("id")
       .single();
 
-    const response = {
-      ...outfit,
-      generationId: generation?.id,
-      compositionUrl
-    };
-
-    return new Response(JSON.stringify(response), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-
+    /*
+      RESPONSE
+    */
+    return new Response(
+      JSON.stringify({
+        items,
+        occasion,
+        formality,
+        stylingNotes: parsed.stylingNotes || "",
+        confidence: parsed.confidence || 0.5,
+        generationId: generation?.id,
+        compositionUrl,
+      }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
   } catch (e) {
-
     console.error("generate-outfit error:", e);
 
     return new Response(

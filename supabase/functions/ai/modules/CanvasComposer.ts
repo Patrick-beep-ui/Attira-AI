@@ -43,7 +43,7 @@ export function composeOutfitSVG(
 
   // background
   parts.push(`
-    <rect x="0" y="0" width="100%" height="100%" fill="#ffffff"/>
+    <rect x="0" y="0" width="100%" height="100%" fill="#f6f6f6"/>
   `);
 
   sortedLayers.forEach((l) => {

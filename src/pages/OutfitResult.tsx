@@ -152,7 +152,7 @@ export default function OutfitResult() {
           </div>
         )*/}
 
-        {/*compositionUrl && (
+        {compositionUrl && (
           <div className="mb-4 w-full max-w-sm mx-auto">
             <div
               className="w-full max-w-[350px] aspect-[5/6] mx-auto rounded-lg border svg-container"
@@ -163,7 +163,7 @@ export default function OutfitResult() {
               }}
             />
           </div>
-        )*/}
+        )}
 
         <div className="space-y-3">
           {outfit.items?.map((item, i) => (
