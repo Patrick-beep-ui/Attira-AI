@@ -18,6 +18,7 @@ interface WardrobeItem {
   size?: string | null;
   brand?: string | null;
   image_url: string | null;
+  processed_image_url?: string | null;
 }
 
 interface Props {
@@ -88,6 +89,10 @@ export function WardrobeItemDetail({ item, open, onOpenChange, onUpdated }: Prop
     if (item.image_url) {
       const path = item.image_url.split("/wardrobe-images/")[1];
       if (path) await supabase.storage.from("wardrobe-images").remove([path]);
+    }
+    if (item.processed_image_url) {
+      const processedPath = item.processed_image_url.split("/wardrobe-images/")[1];
+      if (processedPath) await supabase.storage.from("wardrobe-images").remove([processedPath]);
     }
     const { error } = await supabase.from("wardrobe_items").delete().eq("id", item.id);
     setDeleting(false);

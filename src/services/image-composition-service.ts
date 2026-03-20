@@ -1,3 +1,5 @@
+import { supabase } from "@/integrations/supabase/client";
+
 export type ImageLayer = {
   id: string;
   imageUrl: string;
@@ -114,3 +116,60 @@ export class ImageCompositionService {
 
 export const defaultImageCompositionService =
   new ImageCompositionService();
+
+  /*
+export async function removeBackground(imageUrl: string): Promise<Blob> {
+  const { data, error } = await supabase.functions.invoke(
+    "process-image",
+    {
+      body: { imageUrl },
+    }
+  );
+
+  if (error) {
+    console.error("removeBackground error:", error);
+    throw new Error(error.message || "Failed to remove background");
+  }
+
+  // IMPORTANT: Supabase returns raw data differently depending on config
+  // We need to reconstruct the blob
+
+  if (!data) {
+    throw new Error("No data returned from process-image");
+  }
+
+  // If already a Blob (new SDK behavior)
+  if (data instanceof Blob) {
+    return data;
+  }
+
+  // If ArrayBuffer (common case)
+  return new Blob([data], { type: "image/png" });
+}
+  */
+
+export const removeBackground = async (imageBase64: string): Promise<Blob> => {
+  const { data: { session } } = await supabase.auth.getSession();
+
+  const res = await fetch(
+    "https://hpmcnchtqancomrlgxpu.supabase.co/functions/v1/process-image",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session?.access_token}`,
+      },
+      body: JSON.stringify({ imageUrl: imageBase64 }),
+    }
+  );
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(err);
+  }
+
+  // ✅ THIS is the key
+  const blob = await res.blob();
+
+  return blob;
+};

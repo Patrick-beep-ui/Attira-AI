@@ -13,6 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { WardrobeItemDetail } from "@/components/WardrobeItemDetails";
 import { fetchWardrobeItems } from "@/lib/services/wardrobeService";
+import { removeBackground } from "@/services/image-composition-service";
 
 
 // Categories state (fetched from DB)
@@ -28,7 +29,8 @@ interface WardrobeItem {
   category_id: number | null;
   color: string | null;
   image_url: string | null;
-  // Optionally, join category name for display
+  processed_image_url?: string | null; 
+  processing_status?: string | null; 
   category_name?: string;
 }
 
@@ -58,6 +60,7 @@ export default function Wardrobe() {
   const [brand, setBrand] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [processedImage, setProcessedImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
     const hasSubcategories = parentCategoryId
@@ -112,6 +115,7 @@ export default function Wardrobe() {
     setBrand("");
     setImageFile(null);
     setImagePreview(null);
+    setProcessedImage(null);
   };
 
 
@@ -121,63 +125,142 @@ export default function Wardrobe() {
     const hasSubcategory = parentCategoryId
       ? subCategories.some((c) => c.parent_category_id === parentCategoryId)
       : false;
-    
-    if (!name || !parentCategoryId) return toast.error("Name, and parent category are required");
-    if (hasSubcategory && !categoryId) return toast.error("subcategory is required for this parent category");
+
+    if (!name || !parentCategoryId)
+      return toast.error("Name, and parent category are required");
+
+    if (hasSubcategory && !categoryId)
+      return toast.error("subcategory is required for this parent category");
 
     setSaving(true);
+
     let image_url: string | null = null;
 
+    // ✅ 1. Upload ORIGINAL image
     if (imageFile) {
       const ext = imageFile.name.split(".").pop();
       const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
+
       const { error: uploadError } = await supabase.storage
         .from("wardrobe-images")
         .upload(path, imageFile);
+
       if (uploadError) {
         setSaving(false);
         return toast.error("Image upload failed: " + uploadError.message);
       }
+
       const { data: urlData } = supabase.storage
         .from("wardrobe-images")
         .getPublicUrl(path);
+
       image_url = urlData.publicUrl;
     }
 
-    const { error } = await supabase.from("wardrobe_items").insert({
-      user_id: user.id,
-      name,
-      category_id: hasSubcategory ? categoryId : parentCategoryId, 
-      color: color || null,
-      fabric: fabric || null,
-      size: size || null,
-      brand: brand || null,
-      image_url,
-    });
+    // ✅ 2. Insert item FIRST (fast UX)
+    const { data: insertedItem, error } = await supabase
+      .from("wardrobe_items")
+      .insert({
+        user_id: user.id,
+        name,
+        category_id: hasSubcategory ? categoryId : parentCategoryId,
+        color: color || null,
+        fabric: fabric || null,
+        size: size || null,
+        brand: brand || null,
+        image_url,
+        processing_status: "pending", // ✅ NEW
+      })
+      .select()
+      .single();
 
-    setSaving(false);
-    if (error) return toast.error(error.message);
+    if (error || !insertedItem) {
+      setSaving(false);
+      return toast.error(error?.message || "Insert failed");
+    }
 
+    // ✅ UI responds instantly
     toast.success("Item added!");
     resetForm();
     setAddOpen(false);
     fetchItems();
+    setSaving(false);
+
+    // 🚀 3. PROCESS IMAGE ASYNC (NON-BLOCKING)
+    if (imagePreview) {
+      removeBackground(imagePreview)
+        .then(async (blob) => {
+          const path = `${user.id}/${crypto.randomUUID()}.png`;
+
+          const { error: uploadError } = await supabase.storage
+            .from("wardrobe-images")
+            .upload(path, blob, {
+              contentType: "image/png",
+            });
+
+          if (uploadError) throw uploadError;
+
+          const { data } = supabase.storage
+            .from("wardrobe-images")
+            .getPublicUrl(path);
+
+          // ✅ update item with processed image
+          await supabase
+            .from("wardrobe_items")
+            .update({
+              processed_image_url: data.publicUrl,
+              processing_status: "done",
+            })
+            .eq("id", insertedItem.id);
+
+        })
+        .catch(async (err) => {
+          console.error("Async BG removal failed:", err);
+
+          await supabase
+            .from("wardrobe_items")
+            .update({
+              processing_status: "failed",
+            })
+            .eq("id", insertedItem.id);
+        });
+    }
   };
 
   // Filtering: if a parent category is selected, show all items whose category is a subcategory of that parent
-const filtered = activeCategory === 0
-  ? items
-  : items.filter((i) => {
-      // Subcategories of the selected parent
-      const subIds = subCategories
-        .filter((c) => c.parent_category_id === activeCategory)
-        .map((c) => c.id);
+  const filtered = activeCategory === 0
+    ? items
+    : items.filter((i) => {
+        // Subcategories of the selected parent
+        const subIds = subCategories
+          .filter((c) => c.parent_category_id === activeCategory)
+          .map((c) => c.id);
 
-      return (
-        subIds.includes(i.category_id!) || // subcategory match
-        i.category_id === activeCategory   // parent match (legacy or no-subcategory)
-      );
-    });
+        return (
+          subIds.includes(i.category_id!) || // subcategory match
+          i.category_id === activeCategory   // parent match (legacy or no-subcategory)
+        );
+      });
+
+      const testRemoveBg = async () => {
+    if (!imagePreview) return;
+
+    try {
+      const blob = await removeBackground(imagePreview);
+
+      const url = URL.createObjectURL(blob);
+
+      console.log("Processed image:", url);
+
+      // 👇 show result instantly
+      setImagePreview(url);
+      //setProcessedImage(url);
+
+    } catch (err) {
+      console.error(err);
+      toast.error("Background removal failed");
+    }
+  };
 
   return (
     <AppShell>
@@ -247,6 +330,16 @@ const filtered = activeCategory === 0
                   <span className="text-body-sm">Upload Photo</span>
                 </div>
               )}
+              {processedImage && (
+                <div className="mt-2">
+                  <p className="text-xs text-muted-foreground mb-1">Processed:</p>
+                  <img
+                    src={processedImage}
+                    alt="Processed"
+                    className="h-32 w-full object-contain rounded-lg border"
+                  />
+                </div>
+              )}
             </div>
             <div className="space-y-2">
               <Label className="text-body-sm">Name</Label>
@@ -305,6 +398,11 @@ const filtered = activeCategory === 0
             <div className="space-y-2">
               <Label className="text-body-sm">Brand <span className="text-muted-foreground">(optional, recommended)</span></Label>
               <Input placeholder="e.g. Uniqlo, Nike" className="rounded-xl" value={brand} onChange={(e) => setBrand(e.target.value)} />
+            </div>
+            <div>
+              <Button onClick={testRemoveBg} variant="secondary">
+                Test Remove BG
+              </Button>
             </div>
             <Button onClick={handleAdd} disabled={saving} className="w-full rounded-xl py-5">
               {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
