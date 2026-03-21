@@ -9,7 +9,21 @@ interface OutfitCardProps {
   className?: string;
 }
 
+function adjustSvgForCard(svgString: string): string {
+  const adjusted = svgString
+    .replace(/width="500"/g, 'width="100%"')
+    .replace(/height="600"/g, 'height="100%"');
+  
+  if (!adjusted.includes('style="background-color')) {
+    return adjusted.replace('<svg', '<svg style="background-color: #DEDAD9"');
+  }
+  return adjusted;
+}
+
 export function OutfitCard({ outfit, compact, onClick, className }: OutfitCardProps) {
+  const compositionUrl = outfit.compositionUrl ?? outfit.composition_url ?? null;
+  const hasCanvas = !!compositionUrl;
+
   return (
     <button
       onClick={onClick}
@@ -18,39 +32,36 @@ export function OutfitCard({ outfit, compact, onClick, className }: OutfitCardPr
         className
       )}
     >
-      {/* Item thumbnails grid */}
-      <div className={cn("grid grid-cols-2 gap-px bg-border overflow-hidden -mt-2.5", 
-        compact ? "h-32" : "h-44")}>
-        {outfit.items.slice(0, 4).map((item) => (
-          <div key={item.id} className="flex items-center justify-center bg-muted/50 p-2 aspect-square mx-auto w-20 rounded-full">
-            {item.imageUrl ? (
-              <img
-                src={item.imageUrl}
-                alt={item.name}
-                className="h-full w-full object-cover rounded-full"
-              />
-            ) : (
-              <div
-                className="h-10 w-10 rounded-full border border-border shadow-sm"
-                style={{ backgroundColor: item.color }}
-              />
-            )}
-          </div>
-        ))}
-      </div>
-
-      <div className="space-y-1.5 p-3">
-        <div className="flex items-center justify-between">
-          <span className="text-caption uppercase text-muted-foreground">{outfit.occasion}</span>
-          <AiBadge className="text-[10px]" />
+      {hasCanvas ? (
+        <div
+          className={cn("overflow-hidden", compact ? "h-56" : "h-72")}
+          dangerouslySetInnerHTML={{
+            __html: adjustSvgForCard(
+              decodeURIComponent(compositionUrl!.replace("data:image/svg+xml;utf8,", ""))
+            )
+          }}
+        />
+      ) : (
+        <div className={cn("grid grid-cols-2 gap-px bg-border overflow-hidden -mt-2.5",
+          compact ? "h-56" : "h-72")}>
+          {outfit.items.slice(0, 4).map((item) => (
+            <div key={item.id} className="flex items-center justify-center bg-muted/50 p-2 aspect-square mx-auto w-20 rounded-full">
+              {item.imageUrl ? (
+                <img
+                  src={item.imageUrl}
+                  alt={item.name}
+                  className="h-full w-full object-cover rounded-full"
+                />
+              ) : (
+                <div
+                  className="h-10 w-10 rounded-full border border-border shadow-sm"
+                  style={{ backgroundColor: item.color }}
+                />
+              )}
+            </div>
+          ))}
         </div>
-        <p className="text-body-sm font-medium text-foreground">
-          {outfit.items.map((i) => i.name).join(" + ")}
-        </p>
-        {!compact && (
-          <p className="line-clamp-2 text-body-sm text-muted-foreground">{outfit.stylingNotes}</p>
-        )}
-      </div>
+      )}
     </button>
   );
 }

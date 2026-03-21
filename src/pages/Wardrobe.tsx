@@ -400,9 +400,11 @@ export default function Wardrobe() {
               <Input placeholder="e.g. Uniqlo, Nike" className="rounded-xl" value={brand} onChange={(e) => setBrand(e.target.value)} />
             </div>
             <div>
+              {/*
               <Button onClick={testRemoveBg} variant="secondary">
                 Test Remove BG
               </Button>
+              */}
             </div>
             <Button onClick={handleAdd} disabled={saving} className="w-full rounded-xl py-5">
               {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}

@@ -28,6 +28,8 @@ const filterOptions = ["All", "Work", "Casual", "Date Night", "Event"];
 interface SavedLook extends GeneratedOutfit {
   formality?: string;
   createdAt?: string;
+  compositionUrl?: string;
+  composition_url?: string;
 }
 
 export default function SavedLooks() {
@@ -46,7 +48,7 @@ export default function SavedLooks() {
       // 1) Fetch outfits from the new schema
       const { data: outfits, error: outfitsError } = await supabase
         .from("outfits")
-        .select("id, occasion, formality, styling_notes, confidence, created_at")
+        .select("id, occasion, formality, styling_notes, confidence, created_at, composition_url")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
@@ -79,7 +81,7 @@ export default function SavedLooks() {
               imageUrl: w.image_url ?? null
             };
           });
-          return { id: o.id, occasion: o.occasion, formality: o.formality ?? "balanced", stylingNotes: o.styling_notes ?? "", confidence: o.confidence ?? 0, createdAt: o.created_at, items };
+          return { id: o.id, occasion: o.occasion, formality: o.formality ?? "balanced", stylingNotes: o.styling_notes ?? "", confidence: o.confidence ?? 0, createdAt: o.created_at, composition_url: o.composition_url, items };
         })
       );
 
@@ -93,6 +95,8 @@ export default function SavedLooks() {
           stylingNotes: o.stylingNotes,
           confidence: o.confidence,
           createdAt: o.createdAt,
+          compositionUrl: o.composition_url,
+          composition_url: o.composition_url,
         }))
       );
       setLoading(false);
@@ -132,13 +136,13 @@ export default function SavedLooks() {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-2 gap-3 px-4 pt-3">
+        <div className="grid grid-cols-2 gap-4 px-4 pt-3">
           {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-48 rounded-lg" />
+            <Skeleton key={i} className="h-64 rounded-lg" />
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3 px-4 pb-24 pt-3">
+        <div className="grid grid-cols-2 gap-4 px-4 pb-24 pt-3">
           {filtered.map((look) => (
             <OutfitCard key={look.id} outfit={look} compact onClick={() => setSelectedLook(look)} />
           ))}

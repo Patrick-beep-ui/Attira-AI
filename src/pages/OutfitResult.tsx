@@ -57,6 +57,7 @@ export default function OutfitResult() {
           formality: outfit.formality || "balanced",
           styling_notes: outfit.stylingNotes,
           confidence: outfit.confidence,
+          composition_url: compositionUrl,
         })
         .select("id")
         .single();
@@ -153,7 +154,7 @@ export default function OutfitResult() {
         )*/}
 
         {compositionUrl && (
-          <div className="mb-4 w-full max-w-sm mx-auto">
+          <div className="mb-4 w-full max-w-sm mx-auto" style={{ aspectRatio: "5 / 6", borderRadius: 12, overflow: "hidden", backgroundColor: "#DEDAD9" }}>
             <div
               className="w-full max-w-[350px] aspect-[5/6] mx-auto rounded-lg border svg-container"
               dangerouslySetInnerHTML={{
