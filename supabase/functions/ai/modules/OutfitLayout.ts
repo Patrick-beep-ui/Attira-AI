@@ -24,10 +24,10 @@ export function buildOutfitLayout(items: OutfitItem[]) {
 
   const sizeMap: Record<string, { w: number; h: number }> = {
     outerwear: { w: 260, h: 260 },
-    tops: { w: 240, h: 240 },
-    bottoms: { w: 240, h: 260 },
-    shoes: { w: 200, h: 130 },
-    accessories: { w: 80, h: 80 }
+    tops: { w: 320, h: 320 },
+    bottoms: { w: 300, h: 350 },
+    shoes: { w: 230, h: 250 },
+    accessories: { w: 250, h: 250 }
   };
 
   const layers: ImageLayer[] = [];
@@ -44,6 +44,11 @@ export function buildOutfitLayout(items: OutfitItem[]) {
   const outerwear = items.find(i => i.category === "outerwear");
   const accessories = items.filter(i => i.category === "accessories");
 
+    /*
+      BASE X SHIFT (move outfit to the left)
+  */
+  const baseX = centerX - 60;
+
   /*
     🎯 1. BOTTOMS (anchor piece)
   */
@@ -53,7 +58,7 @@ export function buildOutfitLayout(items: OutfitItem[]) {
     layers.push({
       id: bottoms.id,
       imageUrl: bottoms.imageUrl,
-      x: centerX - size.w / 2 + rand(-10, 10),
+      x: baseX - size.w / 2 + 40 + rand(-10, 10),
       y: 250,
       w: size.w,
       h: size.h,
@@ -71,11 +76,13 @@ export function buildOutfitLayout(items: OutfitItem[]) {
     layers.push({
       id: tops.id,
       imageUrl: tops.imageUrl,
-      x: centerX - size.w / 2 + rand(-20, 20),
-      y: 100,
+      //x: baseX - size.w / 2 - 10 + rand(-10, 10),
+      //y: 140,
+      x: 10,
+      y: 20,
       w: size.w,
       h: size.h,
-      z: 30,
+      z: 40,
       rotation: getRotation()
     });
   }
@@ -89,7 +96,7 @@ export function buildOutfitLayout(items: OutfitItem[]) {
     layers.push({
       id: outerwear.id,
       imageUrl: outerwear.imageUrl,
-      x: centerX - size.w / 2 + rand(-15, 15),
+      x: baseX - size.w / 2 + rand(-10, 10),
       y: 80,
       w: size.w,
       h: size.h,
@@ -104,15 +111,18 @@ export function buildOutfitLayout(items: OutfitItem[]) {
   if (shoes) {
     const size = sizeMap.shoes;
 
+    const sideOffset = Math.random() > 0.5 ? -40 : 40;
+
     layers.push({
       id: shoes.id,
       imageUrl: shoes.imageUrl,
-      x: centerX - size.w / 2 + (Math.random() * 20 - 10), // slight offset
-      y: 480,
+      //x: baseX - size.w / 2 + sideOffset + rand(-10, 10),
+      x: 10,
+      y: 380,
       w: size.w,
       h: size.h,
-      z: 10,
-      rotation: getRotation()
+      z: 30,
+      rotation: getRotation() + 1
     });
   }
 
@@ -125,8 +135,8 @@ export function buildOutfitLayout(items: OutfitItem[]) {
     layers.push({
       id: item.id,
       imageUrl: item.imageUrl,
-      x: centerX + 100 + rand(-20, 20),
-      y: 40 + i * 90,
+      x: centerX + 20 + rand(-15, 15),
+      y: 80 + i * 150 + rand(-10, 10),
       w: size.w,
       h: size.h,
       z: 100 + i,
