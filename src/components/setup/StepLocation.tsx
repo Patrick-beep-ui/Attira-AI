@@ -1,55 +1,95 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 
 type CountryItem = { code: string; name: string };
+type CountryData = { iso2: string; country: string; cities: string[] };
 
 export default function StepLocation({ onNext, next, back }: any) {
-  const [countries, setCountries] = useState<CountryItem[]>([]);
+  const [allCountries, setAllCountries] = useState<CountryData[]>([]);
+  const [filteredCountries, setFilteredCountries] = useState<CountryItem[]>([]);
   const [country, setCountry] = useState<string>("");
-  const [cities, setCities] = useState<string[]>([]);
   const [city, setCity] = useState<string>("");
+  const [cities, setCities] = useState<string[]>([]);
+  const [filteredCities, setFilteredCities] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [loadingCities, setLoadingCities] = useState<boolean>(false);
+  const [showDropdown, setShowDropdown] = useState<boolean>(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const centerAmericanCodes = ["BZ","CR","SV","GT","HN","NI","PA"];
 
   useEffect(() => {
-    // Fetch central american countries from REST Countries and filter to our subset
-    const fetchCountries = async () => {
+    const fetchData = async () => {
       try {
-        const res = await fetch("https://restcountries.com/v3.1/all?fields=name,cca2");
+        const res = await fetch("https://countriesnow.space/api/v0.1/Countries");
         const data = await res.json();
 
-        const list = (data || [])
-          .filter((c: any) => centerAmericanCodes.includes((c?.cca2 || '').toString()))
-          .map((c: any) => ({ code: c.cca2, name: c.name?.common || c.name?.official || c.name }));
-        setCountries(list as CountryItem[]);
-        setLoading(false);
-
+        if (data.data) {
+          const countryList = data.data
+            .filter((c: any) => centerAmericanCodes.includes(c.iso2))
+            .map((c: any) => ({
+              iso2: c.iso2,
+              country: c.country,
+              cities: c.cities || [],
+            }));
+          setAllCountries(countryList);
+          setFilteredCountries(countryList.map((c) => ({ code: c.iso2, name: c.country })));
+        }
       } catch {
-        // Fallback static set
+        setFilteredCountries(centerAmericanCodes.map((code) => ({ code, name: code })));
+      } finally {
         setLoading(false);
-        setCountries(centerAmericanCodes.map((code)=>({ code, name: code })));
       }
     };
-    fetchCountries();
+
+    if (allCountries.length === 0) {
+      fetchData();
+    }
   }, []);
 
   useEffect(() => {
-    if (!country) return;
-    // Basic city mapping per country (could be replaced with API later)
-    const map: Record<string, string[]> = {
-      NI: ["Managua","León","Masaya"],
-      GT: ["Guatemala City","Mixco","Villa Nueva"],
-      CR: ["San Jose","Alajuela"],
-      SV: ["San Salvador","Santa Ana"],
-      HN: ["Tegucigalpa","San Pedro Sula"],
-      PA: ["Panama City","David"],
-      BZ: ["Belmopan","Belize City"],
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowDropdown(false);
+      }
     };
-    setCities(map[country] ?? []);
-    setCity( (map[country]?.[0]) ?? "" );
-  }, [country]);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (!country) {
+      setCities([]);
+      setFilteredCities([]);
+      setCity("");
+      return;
+    }
+
+    const countryData = allCountries.find((c) => c.iso2 === country);
+    if (countryData) {
+      const sortedCities = [...countryData.cities].sort();
+      setCities(sortedCities);
+      setFilteredCities(sortedCities);
+    }
+  }, [country, allCountries]);
+
+  const handleCitySearch = (value: string) => {
+    setCity(value);
+    if (!value.trim()) {
+      setFilteredCities(cities);
+    } else {
+      const lowerValue = value.toLowerCase();
+      setFilteredCities(cities.filter((c) => c.toLowerCase().includes(lowerValue)));
+    }
+  };
+
+  const selectCity = (selectedCity: string) => {
+    setCity(selectedCity);
+    setShowDropdown(false);
+    inputRef.current?.blur();
+  };
 
   const canNext = !!country && !!city;
 
@@ -65,25 +105,49 @@ export default function StepLocation({ onNext, next, back }: any) {
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label>Country</Label>
-          <Select value={country} onValueChange={(val) => setCountry(val)}>
-            <SelectTrigger className="w-full"><SelectValue placeholder="Select country" /></SelectTrigger>
+          <Select value={country} onValueChange={(val) => {
+            setCountry(val);
+            setCity("");
+            setFilteredCities([]);
+            setShowDropdown(false);
+          }}>
+            <SelectTrigger className="w-full"><SelectValue placeholder={loading ? "Loading..." : "Select country"} /></SelectTrigger>
             <SelectContent>
-              {countries.map((c) => (
-                <SelectItem key={c.code} value={c.code}>{c.name}</SelectItem>
-              ))}
+              {loading ? (
+                <SelectItem value="loading" disabled>Loading...</SelectItem>
+              ) : (
+                filteredCountries.map((c) => (
+                  <SelectItem key={c.code} value={c.code}>{c.name}</SelectItem>
+                ))
+              )}
             </SelectContent>
           </Select>
         </div>
-        <div>
+        <div ref={dropdownRef} className="relative">
           <Label>City</Label>
-          <Select value={city} onValueChange={(val) => setCity(val)} disabled={!country}>
-            <SelectTrigger className="w-full"><SelectValue placeholder="Select city" /></SelectTrigger>
-            <SelectContent>
-              {cities.map((ct) => (
-                <SelectItem key={ct} value={ct}>{ct}</SelectItem>
+          <input
+            ref={inputRef}
+            type="text"
+            placeholder={country ? "Search or select city" : "Select country first"}
+            value={city}
+            onChange={(e) => handleCitySearch(e.target.value)}
+            onFocus={() => country && setShowDropdown(true)}
+            disabled={!country}
+            className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+          />
+          {showDropdown && country && filteredCities.length > 0 && (
+            <div className="absolute z-10 w-full mt-1 bg-background border rounded-lg shadow-lg max-h-48 overflow-y-auto">
+              {filteredCities.map((c, i) => (
+                <div
+                  key={`${c}-${i}`}
+                  onClick={() => selectCity(c)}
+                  className="px-3 py-2 cursor-pointer hover:bg-muted text-sm"
+                >
+                  {c}
+                </div>
               ))}
-            </SelectContent>
-          </Select>
+            </div>
+          )}
         </div>
       </div>
 

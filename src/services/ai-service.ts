@@ -8,6 +8,12 @@ export interface OutfitItem {
   imageUrl?: string;
 }
 
+export interface WeatherInfo {
+  temperature: number | null;
+  condition: string | null;
+  context: string | null;
+}
+
 export interface GeneratedOutfit {
   id: string;
   items: OutfitItem[];
@@ -16,8 +22,9 @@ export interface GeneratedOutfit {
   stylingNotes: string;
   confidence: number;
   compositionUrl?: string;
- composition_url?: string;
+  composition_url?: string;
   generationId?: string;
+  weather?: WeatherInfo;
 }
 
 export async function generateOutfit(occasion: string, formality: string = "balanced"): Promise<GeneratedOutfit> {

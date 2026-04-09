@@ -65,6 +65,70 @@ const resolveImageUrl = (supabase: any, item: any): string | null => {
   }
 };
 
+/*
+  WEATHER FETCHER
+*/
+const weatherCodeToCondition = (code: number): string => {
+  const conditions: Record<number, string> = {
+    0: "clear",
+    1: "mainly_clear",
+    2: "partly_cloudy",
+    3: "overcast",
+    45: "foggy",
+    48: "depositing_rime_fog",
+    51: "light_drizzle",
+    53: "moderate_drizzle",
+    55: "dense_drizzle",
+    61: "slight_rain",
+    63: "moderate_rain",
+    65: "heavy_rain",
+    71: "slight_snow",
+    73: "moderate_snow",
+    75: "heavy_snow",
+    80: "slight_rain_showers",
+    81: "moderate_rain_showers",
+    82: "violent_rain_showers",
+    95: "thunderstorm",
+    96: "thunderstorm_with_slight_hail",
+    99: "thunderstorm_with_heavy_hail",
+  };
+  return conditions[code] || "unknown";
+};
+
+interface WeatherData {
+  temperature: number | null;
+  condition: string | null;
+  context: string | null;
+}
+
+const fetchWeather = async (lat: number, lon: number): Promise<WeatherData> => {
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`;
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      console.error("Weather API error:", response.status);
+      return { temperature: null, condition: null, context: null };
+    }
+    
+    const data = await response.json();
+    const weather = data.current_weather;
+    
+    if (!weather) {
+      return { temperature: null, condition: null, context: null };
+    }
+    
+    const temperature = weather.temperature;
+    const condition = weatherCodeToCondition(weather.weathercode);
+    const context = `${temperature}°C and ${condition.replace(/_/g, " ")}`;
+    
+    return { temperature, condition, context };
+  } catch (e) {
+    console.error("Weather fetch failed:", e);
+    return { temperature: null, condition: null, context: null };
+  }
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -150,9 +214,21 @@ serve(async (req) => {
     */
     const { data: profile } = await supabase
       .from("profiles")
-      .select("body_type, preferred_fit, climate, style_preferences")
+      .select("body_type, preferred_fit, latitude, longitude")
       .eq("user_id", user.id)
       .maybeSingle();
+
+    /*
+      FETCH WEATHER
+    */
+    let weather: WeatherData = { temperature: null, condition: null, context: null };
+    
+    if (profile?.latitude && profile?.longitude) {
+      weather = await fetchWeather(profile.latitude, profile.longitude);
+      console.log("Weather data:", weather);
+    } else {
+      console.log("No location data available for weather fetch");
+    }
 
     /*
       AI CALL
@@ -162,7 +238,7 @@ serve(async (req) => {
       profile,
       occasion,
       formality,
-      climate: profile?.climate,
+      weather,
     });
 
     let parsed;
@@ -221,8 +297,8 @@ serve(async (req) => {
         user_id: user.id,
         occasion,
         formality,
-        weather_temperature: null,
-        weather_condition: profile?.climate ?? null,
+        weather_temperature: weather.temperature,
+        weather_condition: weather.condition,
         generated_items: items,
         confidence: parsed.confidence || 0.5,
         accepted: false,
@@ -243,6 +319,11 @@ serve(async (req) => {
         confidence: parsed.confidence || 0.5,
         generationId: generation?.id,
         compositionUrl,
+        weather: {
+          temperature: weather.temperature,
+          condition: weather.condition,
+          context: weather.context,
+        },
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

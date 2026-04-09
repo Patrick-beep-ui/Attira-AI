@@ -14,6 +14,16 @@ export type CreateUserProfileDTO = {
   longitude?: number;
 
   timezone: string;
+  
+  style_preferences?: string[];
+};
+
+const styleNameToId: Record<string, number> = {
+  "Minimalist": 1,
+  "Streetwear": 2,
+  "Business Casual": 3,
+  "Elegant": 4,
+  "Sporty": 5,
 };
 
 export async function updateUserProfile(userId: string, dto: CreateUserProfileDTO) {
@@ -38,7 +48,45 @@ export async function updateUserProfile(userId: string, dto: CreateUserProfileDT
     .update(payload)
     .eq("id", userId);
 
-  return { error };
+  if (error) return { error };
+
+  if (dto.style_preferences && dto.style_preferences.length > 0) {
+    const profileId = await getProfileId(userId);
+    if (profileId) {
+      await saveStylePreferences(profileId, dto.style_preferences);
+    }
+  }
+
+  return { error: null };
+}
+
+async function getProfileId(userId: string): Promise<string | null> {
+  const { data } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("user_id", userId)
+    .single();
+  return data?.id ?? null;
+}
+
+async function saveStylePreferences(profileId: string, styles: string[]) {
+  await supabase
+    .from("profile_style_preferences")
+    .delete()
+    .eq("profile_id", profileId);
+
+  const inserts = styles
+    .filter((s) => styleNameToId[s])
+    .map((s) => ({
+      profile_id: profileId,
+      style_category_id: styleNameToId[s],
+    }));
+
+  if (inserts.length > 0) {
+    await supabase
+      .from("profile_style_preferences")
+      .insert(inserts);
+  }
 }
 
 export async function getProfile(userId: string) {
@@ -49,4 +97,13 @@ export async function getProfile(userId: string) {
     .single();
 
   return data;
+}
+
+export async function getStylePreferences(profileId: string) {
+  const { data } = await supabase
+    .from("profile_style_preferences")
+    .select("style_categories(name)")
+    .eq("profile_id", profileId);
+  
+  return data?.map((d: any) => d.style_categories?.name) ?? [];
 }

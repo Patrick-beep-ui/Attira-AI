@@ -16,10 +16,18 @@ export function outfitGenerationPrompt(data: any) {
     const profileContext = data.profile
       ? `User profile: body type: ${data.profile.body_type || "not set"}, preferred fit: ${
           data.profile.preferred_fit || "not set"
-        }, climate: ${data.profile.climate || "not set"}, style preferences: ${
-          data.profile.style_preferences?.join(", ") || "none"
         }.`
       : "No profile information available.";
+  
+    const weatherContext = data.weather?.context
+      ? `Current weather: ${data.weather.context}. Consider: ${
+          data.weather.temperature !== null && data.weather.temperature > 25
+            ? "lightweight, breathable fabrics; avoid heavy layers"
+            : data.weather.temperature !== null && data.weather.temperature < 15
+            ? "layering options and warmer fabrics"
+            : "comfortable, versatile pieces"
+        }${data.weather.condition?.includes("rain") ? "; prioritize rain-friendly or quick-dry items" : ""}.`
+      : "";
   
     return `
   You are Dressly, an expert personal stylist AI.
@@ -29,11 +37,13 @@ export function outfitGenerationPrompt(data: any) {
   Rules:
   - ONLY suggest items that exist in the user's wardrobe listed below.
   - If the wardrobe is empty or has too few items, suggest a minimal outfit and note what's missing.
-  - Consider the occasion, formality level, season compatibility, and color coordination.
+  - Consider the occasion, formality level, season compatibility, weather appropriateness, and color coordination.
   - Provide brief, confident styling notes (2-3 sentences max).
   - Rate your confidence from 0.0 to 1.0.
   
   ${profileContext}
+  
+  ${weatherContext}
   
   User's wardrobe:
   ${wardrobeList}
@@ -57,8 +67,8 @@ export function outfitGenerationPrompt(data: any) {
   "confidence":0.0
 }
 
-Do not return markdown.
-Do not return explanations.
-Return ONLY JSON.
+  Do not return markdown.
+  Do not return explanations.
+  Return ONLY JSON.
   `;
   }

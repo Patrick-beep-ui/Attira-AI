@@ -22,6 +22,7 @@ export default function OutfitResult() {
   const [saving, setSaving] = useState(false);
 
   const compositionUrl = (outfit as any)?.compositionUrl ?? (outfit as any)?.composition_url ?? null;
+  const weatherContext = outfit.weather?.context ?? null;
 
   if (!outfit) {
     return (
@@ -58,6 +59,9 @@ export default function OutfitResult() {
           styling_notes: outfit.stylingNotes,
           confidence: outfit.confidence,
           composition_url: compositionUrl,
+          weather_temperature: outfit.weather?.temperature ?? null,
+          weather_condition: outfit.weather?.condition ?? null,
+          weather_context: outfit.weather?.context ?? null,
         })
         .select("id")
         .single();
@@ -163,6 +167,12 @@ export default function OutfitResult() {
                 )
               }}
             />
+          </div>
+        )}
+
+        {weatherContext && (
+          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+            <span>Weather: {weatherContext}</span>
           </div>
         )}
 

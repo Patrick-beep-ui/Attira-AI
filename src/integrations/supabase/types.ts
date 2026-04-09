@@ -115,6 +115,10 @@ export type Database = {
           styling_notes: string | null
           created_at: string
           updated_at: string | null
+          composition_url: string | null
+          weather_temperature: number | null
+          weather_condition: string | null
+          weather_context: string | null
         }
         Insert: {
           id?: string
@@ -125,6 +129,10 @@ export type Database = {
           styling_notes?: string | null
           created_at?: string
           updated_at?: string | null
+          composition_url?: string | null
+          weather_temperature?: number | null
+          weather_condition?: string | null
+          weather_context?: string | null
         }
         Update: {
           id?: string
@@ -135,6 +143,10 @@ export type Database = {
           styling_notes?: string | null
           created_at?: string
           updated_at?: string | null
+          composition_url?: string | null
+          weather_temperature?: number | null
+          weather_condition?: string | null
+          weather_context?: string | null
         }
         Relationships: []
       }
