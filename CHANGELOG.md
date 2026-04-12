@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/Patrick-beep-ui/Dressly/compare/v1.2.0...v1.3.0) (2026-04-12)
+
+
+### Features
+
+* add weather info and style preferences ([1fde0e6](https://github.com/Patrick-beep-ui/Dressly/commit/1fde0e688abd9bddc4e0e547b91ab712a144b43f))
+
 ## [1.2.0](https://github.com/Patrick-beep-ui/Dressly/compare/v1.1.0...v1.2.0) (2026-03-21)
 
 
