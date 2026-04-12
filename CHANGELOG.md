@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/Patrick-beep-ui/Dressly/compare/v1.3.0...v1.4.0) (2026-04-12)
+
+
+### Features
+
+* basic feed implementation ([7c69fcb](https://github.com/Patrick-beep-ui/Dressly/commit/7c69fcbc0b2044e0ede0d1502a32ddf3adfd39bc))
+
 ## [1.3.0](https://github.com/Patrick-beep-ui/Dressly/compare/v1.2.0...v1.3.0) (2026-04-12)
 
 
