@@ -3,13 +3,14 @@ import { AppShell } from "@/components/AppShell";
 import { HeaderBar } from "@/components/HeaderBar";
 import { AiBadge } from "@/components/AiBadge";
 import { Button } from "@/components/ui/button";
-import { Bookmark, RefreshCw, Share2 } from "lucide-react";
+import { Bookmark, RefreshCw, Share2, Globe, Lock } from "lucide-react";
 import { toast } from "sonner";
 import type { GeneratedOutfit } from "@/services/ai-service";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
+import { publishOutfit, unpublishOutfit, shareOutfit } from "@/services/outfit-service";
 
 export default function OutfitResult() {
 
@@ -18,8 +19,11 @@ export default function OutfitResult() {
   const { user } = useAuth();
   const outfit = location.state?.outfit as GeneratedOutfit | undefined;
   console.log("🎬 OUTFIT RESULT:", outfit);
-  // computed above
+  
   const [saving, setSaving] = useState(false);
+  const [currentOutfitId, setCurrentOutfitId] = useState<string | null>(null);
+  const [isPublic, setIsPublic] = useState(false);
+  const [publishing, setPublishing] = useState(false);
 
   const compositionUrl = (outfit as any)?.compositionUrl ?? (outfit as any)?.composition_url ?? null;
   const weatherContext = outfit.weather?.context ?? null;
@@ -69,6 +73,8 @@ export default function OutfitResult() {
       if (outfitError) throw outfitError;
 
       const outfitId = outfits.id;
+      setCurrentOutfitId(outfitId);
+      setIsPublic(false);
 
       /*
       Save outfit items
@@ -241,14 +247,57 @@ export default function OutfitResult() {
             <RefreshCw className="h-4 w-4" />
           </Button>
 
-          <Button
-            variant="outline"
-            onClick={() => toast.info("Sharing coming soon")}
-          >
-            <Share2 className="h-4 w-4" />
-          </Button>
-
         </div>
+
+        {currentOutfitId && (
+          <div className="flex gap-3">
+            <Button
+              variant={isPublic ? "default" : "outline"}
+              onClick={async () => {
+                if (!user) return;
+                setPublishing(true);
+                try {
+                  if (isPublic) {
+                    await unpublishOutfit(user.id, currentOutfitId);
+                    setIsPublic(false);
+                    toast.success("Outfit is now private");
+                  } else {
+                    await publishOutfit(user.id, currentOutfitId);
+                    setIsPublic(true);
+                    toast.success("Outfit is now public!");
+                  }
+                } catch (err) {
+                  toast.error("Failed to update visibility");
+                } finally {
+                  setPublishing(false);
+                }
+              }}
+              disabled={publishing}
+              className="flex-1"
+            >
+              {isPublic ? (
+                <>
+                  <Lock className="h-4 w-4" />
+                  {publishing ? "..." : "Make Private"}
+                </>
+              ) : (
+                <>
+                  <Globe className="h-4 w-4" />
+                  {publishing ? "..." : "Publish"}
+                </>
+              )}
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={async () => {
+                await shareOutfit(compositionUrl ?? null, currentOutfitId ?? undefined);
+              }}
+            >
+              <Share2 className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
 
       </div>
     </AppShell>

@@ -125,6 +125,8 @@ export type Database = {
           weather_temperature: number | null
           weather_condition: string | null
           weather_context: string | null
+          is_public: boolean
+          published_at: string | null
         }
         Insert: {
           id?: string
@@ -139,6 +141,8 @@ export type Database = {
           weather_temperature?: number | null
           weather_condition?: string | null
           weather_context?: string | null
+          is_public?: boolean
+          published_at?: string | null
         }
         Update: {
           id?: string
@@ -153,6 +157,8 @@ export type Database = {
           weather_temperature?: number | null
           weather_condition?: string | null
           weather_context?: string | null
+          is_public?: boolean
+          published_at?: string | null
         }
         Relationships: []
       }

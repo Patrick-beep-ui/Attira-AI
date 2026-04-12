@@ -8,10 +8,11 @@ import { useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { AiBadge } from "@/components/AiBadge";
-import { Trash2, X } from "lucide-react";
+import { Trash2, X, Globe, Lock, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import type { GeneratedOutfit } from "@/services/ai-service";
+import { publishOutfit, unpublishOutfit, shareOutfit } from "@/services/outfit-service";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,6 +31,7 @@ interface SavedLook extends GeneratedOutfit {
   createdAt?: string;
   compositionUrl?: string;
   composition_url?: string;
+  is_public?: boolean;
 }
 
 export default function SavedLooks() {
@@ -40,6 +42,8 @@ export default function SavedLooks() {
   const [selectedLook, setSelectedLook] = useState<SavedLook | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [publishing, setPublishing] = useState<string | null>(null);
+  const [sharing, setSharing] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -48,7 +52,7 @@ export default function SavedLooks() {
       // 1) Fetch outfits from the new schema
       const { data: outfits, error: outfitsError } = await supabase
         .from("outfits")
-        .select("id, occasion, formality, styling_notes, confidence, created_at, composition_url")
+        .select("id, occasion, formality, styling_notes, confidence, created_at, composition_url, is_public")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
@@ -81,7 +85,7 @@ export default function SavedLooks() {
               imageUrl: w.image_url ?? null
             };
           });
-          return { id: o.id, occasion: o.occasion, formality: o.formality ?? "balanced", stylingNotes: o.styling_notes ?? "", confidence: o.confidence ?? 0, createdAt: o.created_at, composition_url: o.composition_url, items };
+return { id: o.id, occasion: o.occasion, formality: o.formality ?? "balanced", stylingNotes: o.styling_notes ?? "", confidence: o.confidence ?? 0, createdAt: o.created_at, composition_url: o.composition_url, items, is_public: o.is_public ?? false };
         })
       );
 
@@ -97,6 +101,7 @@ export default function SavedLooks() {
           createdAt: o.createdAt,
           compositionUrl: o.composition_url,
           composition_url: o.composition_url,
+          is_public: o.is_public,
         }))
       );
       setLoading(false);
@@ -109,7 +114,7 @@ export default function SavedLooks() {
       ? looks
       : looks.filter((l) => l.occasion.toLowerCase().replace(/\s+/g, "-") === filter.toLowerCase().replace(/\s+/g, "-"));
 
-  const handleDelete = async () => {
+const handleDelete = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
     // Delete from new outfits table (and cascading items if configured)
@@ -123,6 +128,39 @@ export default function SavedLooks() {
     }
     setDeleting(false);
     setDeleteTarget(null);
+  };
+
+  const handlePublish = async (lookId: string, makePublic: boolean) => {
+    if (!user) return;
+    setPublishing(lookId);
+    try {
+      if (makePublic) {
+        await publishOutfit(user.id, lookId);
+        toast.success("Outfit is now public!");
+      } else {
+        await unpublishOutfit(user.id, lookId);
+        toast.success("Outfit is now private");
+      }
+      setLooks((prev) =>
+        prev.map((l) => (l.id === lookId ? { ...l, is_public: makePublic } : l))
+      );
+      if (selectedLook?.id === lookId) {
+        setSelectedLook((prev) => (prev ? { ...prev, is_public: makePublic } : null));
+      }
+    } catch (err) {
+      toast.error("Failed to update visibility");
+    } finally {
+      setPublishing(null);
+    }
+  };
+
+  const handleShare = async (look: SavedLook) => {
+    setSharing(true);
+    try {
+      await shareOutfit(look.compositionUrl ?? look.composition_url ?? null, look.id);
+    } finally {
+      setSharing(false);
+    }
   };
 
   return (
@@ -221,6 +259,39 @@ export default function SavedLooks() {
                     : "Try adding more items to your wardrobe in complementary colors for better outfit variety."}
                 </p>
               </div>
+
+{/* Publish / Make Private */}
+              <div className="flex gap-3 mb-3">
+                <Button
+                  variant={selectedLook.is_public ? "default" : "outline"}
+                  className="flex-1 gap-2 rounded-xl"
+                  onClick={() => handlePublish(selectedLook.id, !selectedLook.is_public)}
+                  disabled={publishing === selectedLook.id}
+                >
+                  {selectedLook.is_public ? (
+                    <>
+                      <Lock className="h-4 w-4" />
+                      {publishing === selectedLook.id ? "..." : "Make Private"}
+                    </>
+                  ) : (
+                    <>
+                      <Globe className="h-4 w-4" />
+                      {publishing === selectedLook.id ? "..." : "Publish"}
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {/* Share */}
+              <Button
+                variant="outline"
+                className="w-full gap-2 rounded-xl mb-3"
+                onClick={() => handleShare(selectedLook)}
+                disabled={sharing}
+              >
+                <Share2 className="h-4 w-4" />
+                {sharing ? "..." : "Share"}
+              </Button>
 
               {/* Delete */}
               <Button
