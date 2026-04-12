@@ -19,6 +19,7 @@ import Settings from "./pages/Settings";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import ProfileSetup from "./pages/ProfileSetup";
+import OutfitPage from "./pages/OutfitPage";
 
 import ProtectedRoute from "./components/ProtectedRoutes";
 import { useAuth } from "@/contexts/AuthContext";
@@ -107,6 +108,11 @@ const App = () => (
                   <SavedLooks />
                 </ProtectedRoute>
               }
+            />
+
+            <Route
+              path="/outfit/:id"
+              element={<OutfitPage />}
             />
 
             <Route
