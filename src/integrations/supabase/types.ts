@@ -29,6 +29,8 @@ export type Database = {
           timezone: string | null
           created_at: string
           updated_at: string
+          last_personal_update: string | null
+          last_style_update: string | null
         }
         Insert: {
           id?: string
@@ -44,6 +46,8 @@ export type Database = {
           timezone?: string | null
           created_at?: string
           updated_at?: string
+          last_personal_update?: string | null
+          last_style_update?: string | null
         }
         Update: {
           id?: string
@@ -59,6 +63,8 @@ export type Database = {
           timezone?: string | null
           created_at?: string
           updated_at?: string
+          last_personal_update?: string | null
+          last_style_update?: string | null
         }
         Relationships: []
       }
