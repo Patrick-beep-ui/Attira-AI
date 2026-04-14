@@ -27,6 +27,9 @@ export type Database = {
           latitude: number | null
           longitude: number | null
           timezone: string | null
+          first_name: string | null
+          last_name: string | null
+          profile_picture_url: string | null
           created_at: string
           updated_at: string
           last_personal_update: string | null
@@ -44,6 +47,9 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           timezone?: string | null
+          first_name?: string | null
+          last_name?: string | null
+          profile_picture_url?: string | null
           created_at?: string
           updated_at?: string
           last_personal_update?: string | null
@@ -61,6 +67,9 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           timezone?: string | null
+          first_name?: string | null
+          last_name?: string | null
+          profile_picture_url?: string | null
           created_at?: string
           updated_at?: string
           last_personal_update?: string | null
@@ -297,6 +306,27 @@ export type Database = {
         Update: {
           item_id?: string
           tag_id?: number
+        }
+        Relationships: []
+      }
+      outfit_likes: {
+        Row: {
+          id: string
+          user_id: string
+          outfit_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          outfit_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          outfit_id?: string
+          created_at?: string
         }
         Relationships: []
       }
