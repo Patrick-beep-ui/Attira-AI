@@ -105,14 +105,71 @@ export async function getUserOutfits(userId: string) {
 }
 
 export async function getPublicOutfits(limit = 20, offset = 0) {
-  const { data, error } = await supabase
+  const { data: outfits, error } = await supabase
     .from("outfits")
-    .select("*")
+    .select("*, outfit_likes(count)")
     .eq("is_public", true)
     .order("published_at", { ascending: false })
     .range(offset, offset + limit - 1);
 
-  return { data, error };
+  if (error || !outfits) return { data: null, error };
+
+  const userIds = [...new Set(outfits.map(o => o.user_id))];
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("user_id, username, first_name, last_name")
+    .in("user_id", userIds);
+
+  const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
+
+  const data = outfits.map(o => ({
+    ...o,
+    profiles: profileMap.get(o.user_id) || null
+  }));
+
+  return { data, error: null };
+}
+
+export async function toggleLike(userId: string, outfitId: string) {
+  const { data: existing } = await supabase
+    .from("outfit_likes")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("outfit_id", outfitId)
+    .single();
+
+  if (existing) {
+    await supabase
+      .from("outfit_likes")
+      .delete()
+      .eq("user_id", userId)
+      .eq("outfit_id", outfitId);
+    return { liked: false };
+  } else {
+    await supabase
+      .from("outfit_likes")
+      .insert({ user_id: userId, outfit_id: outfitId });
+    return { liked: true };
+  }
+}
+
+export async function getLikeCount(outfitId: string) {
+  const { count, error } = await supabase
+    .from("outfit_likes")
+    .select("*", { count: "exact" })
+    .eq("outfit_id", outfitId);
+
+  return { count: count || 0, error };
+}
+
+export async function getUserLikes(userId: string, outfitIds: string[]) {
+  const { data } = await supabase
+    .from("outfit_likes")
+    .select("outfit_id")
+    .eq("user_id", userId)
+    .in("outfit_id", outfitIds);
+
+  return data?.map((d) => d.outfit_id) || [];
 }
 
 export async function getOutfitById(outfitId: string) {

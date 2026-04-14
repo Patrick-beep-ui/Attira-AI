@@ -6,11 +6,12 @@ import { TagChip } from "@/components/TagChip";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getTodaysLook } from "@/services/ai-service";
-import { getPublicOutfits } from "@/services/outfit-service";
+import { getPublicOutfits, toggleLike, getLikeCount, getUserLikes } from "@/services/outfit-service";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Sparkles, Heart, MessageCircle } from "lucide-react";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 import type { GeneratedOutfit } from "@/services/ai-service";
 
 interface FeedOutfit {
@@ -23,6 +24,11 @@ interface FeedOutfit {
   formality: string | null;
   styling_notes: string | null;
   published_at: string | null;
+  profiles?: {
+    username: string | null;
+    first_name: string | null;
+    last_name: string | null;
+  } | null;
 }
 
 export default function HomePage() {
@@ -32,20 +38,36 @@ export default function HomePage() {
 
   const [feed, setFeed] = useState<FeedOutfit[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userLikes, setUserLikes] = useState<string[]>([]);
+  const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
 
-  useEffect(() => {
+useEffect(() => {
     const fetchFeed = async () => {
       setLoading(true);
       const { data, error } = await getPublicOutfits(20);
       if (error) {
         console.error("Failed to fetch feed:", error);
       } else {
-        setFeed((data || []) as unknown as FeedOutfit[]);
+        const outfits = data as unknown as FeedOutfit[];
+        setFeed(outfits);
+        
+        const counts: Record<string, number> = {};
+        for (const o of outfits) {
+          const { count } = await getLikeCount(o.id);
+          counts[o.id] = count;
+        }
+        setLikeCounts(counts);
+        
+        if (user) {
+          const ids = outfits.map((o) => o.id);
+          const liked = await getUserLikes(user.id, ids);
+          setUserLikes(liked);
+        }
       }
       setLoading(false);
     };
     fetchFeed();
-  }, []);
+  }, [user]);
 
   const greeting = () => {
     const h = new Date().getHours();
@@ -100,7 +122,14 @@ export default function HomePage() {
           ) : (
             <div className="space-y-6">
               {feed.map((outfit) => (
-                <FeedCard key={outfit.id} outfit={outfit} />
+                <FeedCard 
+                  key={outfit.id} 
+                  outfit={outfit} 
+                  isLiked={userLikes.includes(outfit.id)}
+                  likeCount={likeCounts[outfit.id] || 0}
+                  setUserLikes={setUserLikes}
+                  setLikeCounts={setLikeCounts}
+                />
               ))}
             </div>
           )}
@@ -121,9 +150,63 @@ function adjustSvgForCard(svgString: string): string {
   return adjusted;
 }
 
-function FeedCard({ outfit }: { outfit: FeedOutfit }) {
+function FeedCard({ 
+  outfit, 
+  isLiked: initialIsLiked, 
+  likeCount: initialLikeCount,
+  setUserLikes,
+  setLikeCounts
+}: { 
+  outfit: FeedOutfit; 
+  isLiked: boolean;
+  likeCount: number;
+  setUserLikes: React.Dispatch<React.SetStateAction<string[]>>;
+  setLikeCounts: React.Dispatch<React.SetStateAction<Record<string, number>>>;
+}) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const compositionUrl = outfit.composition_url;
+  
+  const [isLiked, setIsLiked] = useState(initialIsLiked);
+  const [likeCount, setLikeCount] = useState(initialLikeCount);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setIsLiked(initialIsLiked);
+    setLikeCount(initialLikeCount);
+  }, [initialIsLiked, initialLikeCount]);
+  
+  const handleLike = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user || loading) return;
+    
+    const wasLiked = isLiked;
+    const prevCount = likeCount;
+    
+    setLoading(true);
+    setIsLiked(!wasLiked);
+    setLikeCount(wasLiked ? prevCount - 1 : prevCount + 1);
+    setUserLikes(prev => wasLiked 
+      ? prev.filter(id => id !== outfit.id) 
+      : [...prev, outfit.id]
+    );
+    setLikeCounts(prev => ({ ...prev, [outfit.id]: wasLiked ? prevCount - 1 : prevCount + 1 }));
+    
+    try {
+      await toggleLike(user.id, outfit.id);
+    } catch (err) {
+      setIsLiked(wasLiked);
+      setLikeCount(prevCount);
+      setUserLikes(prev => wasLiked 
+        ? [...prev, outfit.id] 
+        : prev.filter(id => id !== outfit.id)
+      );
+      setLikeCounts(prev => ({ ...prev, [outfit.id]: prevCount }));
+      toast.error("Failed to like");
+    } finally {
+      setLoading(false);
+    }
+  };
   const hasCanvas = !!compositionUrl;
   
   return (
@@ -137,11 +220,11 @@ function FeedCard({ outfit }: { outfit: FeedOutfit }) {
       <div className="flex items-center gap-3 p-4 border-b border-border">
         <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
           <span className="text-body-sm font-medium text-primary">
-            {outfit.occasion?.charAt(0).toUpperCase() || "O"}
+            {outfit.profiles?.username?.slice(0, 2).toUpperCase() || "O"}
           </span>
         </div>
         <div>
-          <p className="text-body font-medium text-foreground">Outfit</p>
+          <p className="text-body font-medium text-foreground">@{outfit.profiles?.username || "user"}</p>
           <p className="text-caption text-muted-foreground">
             {outfit.published_at ? new Date(outfit.published_at).toLocaleDateString() : new Date(outfit.created_at).toLocaleDateString()}
           </p>
@@ -186,9 +269,12 @@ function FeedCard({ outfit }: { outfit: FeedOutfit }) {
 
         {/* Actions */}
         <div className="flex gap-4 pt-2">
-          <button className="flex items-center gap-1.5 text-body-sm text-muted-foreground hover:text-foreground">
-            <Heart className="h-4 w-4" />
-            <span>Like</span>
+          <button 
+            onClick={handleLike}
+            className={`flex items-center gap-1.5 text-body-sm ${isLiked ? 'text-red-500' : 'text-muted-foreground hover:text-foreground'}`}
+          >
+            <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
+            <span>{likeCount > 0 ? likeCount : 'Like'}</span>
           </button>
           <button className="flex items-center gap-1.5 text-body-sm text-muted-foreground hover:text-foreground">
             <MessageCircle className="h-4 w-4" />
