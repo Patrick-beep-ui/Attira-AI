@@ -214,9 +214,41 @@ serve(async (req) => {
     */
     const { data: profile } = await supabase
       .from("profiles")
-      .select("body_type, preferred_fit, latitude, longitude")
+      .select("body_type, preferred_fit, height_cm, weight_kg, latitude, longitude")
       .eq("user_id", user.id)
       .maybeSingle();
+
+    /*
+      FETCH STYLE PREFERENCES
+    */
+    const { data: profileData } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    let stylePreferences: string[] = [];
+    if (profileData?.id) {
+      const { data: prefs } = await supabase
+        .from("profile_style_preferences")
+        .select("style_categories(name)")
+        .eq("profile_id", profileData.id);
+      
+      stylePreferences = prefs?.map((p: any) => p.style_categories?.name).filter(Boolean) || [];
+      console.log("Style preferences:", stylePreferences);
+    }
+
+    /*
+      FETCH GENERATION HISTORY
+    */
+    const { data: generationHistory } = await supabase
+      .from("outfit_generations")
+      .select("occasion, formality, generated_items, accepted, confidence, created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(10);
+
+    console.log("Generation history:", generationHistory);
 
     /*
       FETCH WEATHER
@@ -239,6 +271,8 @@ serve(async (req) => {
       occasion,
       formality,
       weather,
+      generationHistory: generationHistory || [],
+      stylePreferences,
     });
 
     let parsed;
