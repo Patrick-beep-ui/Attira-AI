@@ -7,6 +7,7 @@ import { TagChip } from "@/components/TagChip";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getOutfitById, getOutfitItems, shareOutfit } from "@/services/outfit-service";
+import { getProfile } from "@/services/profile-service";
 import { User, X, Heart, MessageCircle, Share2, Globe, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
@@ -21,6 +22,13 @@ interface OutfitData {
   created_at: string;
   composition_url: string | null;
   is_public: boolean;
+}
+
+interface ProfileData {
+  username: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  [key: string]: any;
 }
 
 interface OutfitItem {
@@ -43,6 +51,7 @@ export default function OutfitPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [outfit, setOutfit] = useState<OutfitData | null>(null);
+  const [creatorProfile, setCreatorProfile] = useState<ProfileData | null>(null);
   const [items, setItems] = useState<any[]>([]);
   const [wardrobeItems, setWardrobeItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,6 +71,9 @@ export default function OutfitPage() {
       }
 
       setOutfit(data as OutfitData);
+
+      const profile = await getProfile((data as OutfitData).user_id);
+      setCreatorProfile(profile as unknown as ProfileData | null);
 
       const { data: itemsData } = await getOutfitItems(id);
       setItems(itemsData || []);
@@ -124,10 +136,11 @@ export default function OutfitPage() {
           </div>
           <div>
             <p className="text-body font-medium text-foreground">
-              {outfit.is_public ? "Public Outfit" : "Private Outfit"}
+              {creatorProfile?.username || creatorProfile?.first_name || "Anonymous"}
             </p>
             <p className="text-caption text-muted-foreground">
               {new Date(outfit.created_at).toLocaleDateString()}
+              {!outfit.is_public && " · Private"}
             </p>
           </div>
         </div>

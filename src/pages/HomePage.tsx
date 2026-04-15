@@ -223,12 +223,20 @@ function FeedCard({
             {outfit.profiles?.username?.slice(0, 2).toUpperCase() || "O"}
           </span>
         </div>
-        <div>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            if (outfit.profiles?.username) {
+              navigate(`/u/${outfit.profiles.username}`);
+            }
+          }}
+          className="flex-1 text-left"
+        >
           <p className="text-body font-medium text-foreground">@{outfit.profiles?.username || "user"}</p>
           <p className="text-caption text-muted-foreground">
             {outfit.published_at ? new Date(outfit.published_at).toLocaleDateString() : new Date(outfit.created_at).toLocaleDateString()}
           </p>
-        </div>
+        </button>
       </div>
 
       {/* Outfit Preview */}
