@@ -27,7 +27,10 @@ export default function Settings() {
 
       <div className="space-y-6 px-4 pt-4 pb-8">
         {/* User Info */}
-        <div className="flex items-center gap-4 rounded-lg border border-border bg-card p-4 shadow-sm">
+        <button
+          onClick={() => navigate("/profile")}
+          className="flex w-full items-center gap-4 rounded-lg border border-border bg-card p-4 shadow-sm text-left hover:bg-muted/50"
+        >
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
             <User className="h-5 w-5 text-primary" />
           </div>
@@ -35,7 +38,8 @@ export default function Settings() {
             <p className="text-body font-medium text-foreground">{user?.email || "Guest"}</p>
             <p className="text-caption text-muted-foreground">Free Plan</p>
           </div>
-        </div>
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        </button>
 
         {/* Menu */}
         <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
