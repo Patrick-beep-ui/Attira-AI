@@ -10,8 +10,11 @@ export class OutfitModule {
     const prompt = outfitGenerationPrompt({
       wardrobe: data.wardrobe,
       profile: data.profile,
-      weather: data.climate,
-      occasion: data.occasion
+      weather: data.weather,
+      occasion: data.occasion,
+      formality: data.formality,
+      generationHistory: data.generationHistory || [],
+      stylePreferences: data.stylePreferences || []
     });
 
     return this.ai.run(prompt);
