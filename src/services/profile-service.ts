@@ -236,3 +236,61 @@ export async function updatePersonalData(userId: string, dto: UpdatePersonalData
   
   return { error: null };
 }
+
+export interface PublicProfile {
+  id: string;
+  user_id: string;
+  username: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  profile_picture_url: string | null;
+  created_at: string;
+  style_preferences?: string[];
+}
+
+export interface PublicOutfit {
+  id: string;
+  composition_url: string | null;
+  created_at: string;
+  published_at: string | null;
+}
+
+export async function getProfileByUsername(username: string): Promise<PublicProfile | null> {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, user_id, username, first_name, last_name, profile_picture_url, created_at")
+    .eq("username", username)
+    .single();
+
+  if (error || !data) return null;
+
+  const stylePrefs = await getStylePreferences(data.id);
+  
+  return { ...data, style_preferences: stylePrefs };
+}
+
+export async function getPublicOutfitsByUser(userId: string): Promise<PublicOutfit[]> {
+  const { data, error } = await supabase
+    .from("outfits")
+    .select("id, composition_url, created_at, published_at")
+    .eq("user_id", userId)
+    .eq("is_public", true)
+    .order("published_at", { ascending: false });
+
+  return data || [];
+}
+
+export async function updateProfileBasic(userId: string, dto: { first_name?: string; last_name?: string; username?: string; profile_picture_url?: string }) {
+  const payload: Record<string, unknown> = {};
+  if (dto.first_name !== undefined) payload.first_name = dto.first_name;
+  if (dto.last_name !== undefined) payload.last_name = dto.last_name;
+  if (dto.username !== undefined) payload.username = dto.username;
+  if (dto.profile_picture_url !== undefined) payload.profile_picture_url = dto.profile_picture_url;
+
+  const { error } = await supabase
+    .from("profiles")
+    .update(payload)
+    .eq("user_id", userId);
+
+  return { error };
+}
