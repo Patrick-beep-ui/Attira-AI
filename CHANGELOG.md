@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.5.0](https://github.com/Patrick-beep-ui/Dressly/compare/v1.4.0...v1.5.0) (2026-04-14)
+
+
+### Features
+
+* add social feed features - outfit likes and user profiles ([c4f6f71](https://github.com/Patrick-beep-ui/Dressly/commit/c4f6f71df97ea15efcb13072e5e8f5d7b2c9dbce))
+* add social feed features - outfit likes and user profiles ([909d7ff](https://github.com/Patrick-beep-ui/Dressly/commit/909d7ff0a071c19237d3911067b56c90064c39a1))
+
 ## [1.4.0](https://github.com/Patrick-beep-ui/Dressly/compare/v1.3.0...v1.4.0) (2026-04-12)
 
 
