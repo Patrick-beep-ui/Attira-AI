@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { AppShell } from "@/components/AppShell";
 import { HeaderBar } from "@/components/HeaderBar";
 import { TagChip } from "@/components/TagChip";
-import { Plus, Camera, Loader2 } from "lucide-react";
+import { Plus, Camera, Loader2, Upload } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { WardrobeItemDetail } from "@/components/WardrobeItemDetails";
 import { fetchWardrobeItems } from "@/lib/services/wardrobeService";
 import { removeBackground } from "@/services/image-composition-service";
+import { CameraCapture, CameraMode } from "@/components/CameraCapture";
 
 
 // Categories state (fetched from DB)
@@ -62,6 +63,10 @@ export default function Wardrobe() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [processedImage, setProcessedImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Camera state
+  const [cameraMode, setCameraMode] = useState<CameraMode>("flatlay");
+  const [cameraOpen, setCameraOpen] = useState(false);
 
     const hasSubcategories = parentCategoryId
     ? subCategories.some((c) => c.parent_category_id === parentCategoryId)
@@ -116,6 +121,15 @@ export default function Wardrobe() {
     setImageFile(null);
     setImagePreview(null);
     setProcessedImage(null);
+    setCameraOpen(false);
+  };
+
+  const handleCameraCapture = (file: File) => {
+    setImageFile(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setImagePreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
+    setCameraOpen(false);
   };
 
 
@@ -318,29 +332,61 @@ export default function Wardrobe() {
           </DialogHeader>
           <div className="space-y-4 pt-2 px-6 pb-6 overflow-y-auto" style={{ maxHeight: 'calc(80vh - 64px)' }}>
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              className="flex h-32 cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-border bg-muted/30 transition-colors hover:border-primary/30 overflow-hidden"
-            >
-              {imagePreview ? (
-                <img src={imagePreview} alt="Preview" className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                  <Camera className="h-6 w-6" />
-                  <span className="text-body-sm">Upload Photo</span>
-                </div>
-              )}
-              {processedImage && (
-                <div className="mt-2">
-                  <p className="text-xs text-muted-foreground mb-1">Processed:</p>
-                  <img
-                    src={processedImage}
-                    alt="Processed"
-                    className="h-32 w-full object-contain rounded-lg border"
-                  />
-                </div>
-              )}
-            </div>
+            
+            {cameraOpen ? (
+              <CameraCapture
+                mode={cameraMode}
+                onCapture={handleCameraCapture}
+                onCancel={() => setCameraOpen(false)}
+              />
+            ) : imagePreview ? (
+              <div className="relative">
+                <img src={imagePreview} alt="Preview" className="h-40 w-full object-cover rounded-xl" />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-2 top-2 h-8 px-2 text-white bg-black/50 hover:bg-black/70"
+                  onClick={() => {
+                    setImagePreview(null);
+                    setImageFile(null);
+                    setProcessedImage(null);
+                  }}
+                >
+                  Remove
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex flex-col items-center justify-center gap-2 h-24 rounded-xl border-2 border-dashed border-border bg-muted/30 transition-colors hover:border-primary/30"
+                >
+                  <Upload className="h-5 w-5 text-muted-foreground" />
+                  <span className="text-body-sm text-muted-foreground">Upload</span>
+                </button>
+                <button
+                  onClick={() => setCameraOpen(true)}
+                  className="flex flex-col items-center justify-center gap-2 h-24 rounded-xl border-2 border-dashed border-border bg-muted/30 transition-colors hover:border-primary/30"
+                >
+                  <svg className="h-5 w-5 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                    <circle cx="12" cy="13" r="4"/>
+                  </svg>
+                  <span className="text-body-sm text-muted-foreground">Camera</span>
+                </button>
+              </div>
+            )}
+
+            {processedImage && (
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Background Removed:</p>
+                <img
+                  src={processedImage}
+                  alt="Processed"
+                  className="h-32 w-full object-contain rounded-lg border bg-muted"
+                />
+              </div>
+            )}
             <div className="space-y-2">
               <Label className="text-body-sm">Name</Label>
               <Input placeholder="e.g. Blue Oxford Shirt" className="rounded-xl" value={name} onChange={(e) => setName(e.target.value)} />
