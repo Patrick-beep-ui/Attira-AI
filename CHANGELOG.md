@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.6.0](https://github.com/Patrick-beep-ui/Dressly/compare/v1.5.0...v1.6.0) (2026-04-17)
+
+
+### Features
+
+* Take wardrobe items pitcure. v1 ([d01e298](https://github.com/Patrick-beep-ui/Dressly/commit/d01e298e455487578cadb2bc28b176347ec563a7))
+* Take wardrobe items pitcure. v1 ([1e041b3](https://github.com/Patrick-beep-ui/Dressly/commit/1e041b327c20ae65d6f548a37b73b3bb7739a5f6))
+
 ## [1.5.0](https://github.com/Patrick-beep-ui/Dressly/compare/v1.4.0...v1.5.0) (2026-04-14)
 
 
