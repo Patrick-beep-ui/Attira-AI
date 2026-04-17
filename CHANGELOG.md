@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.7.0](https://github.com/Patrick-beep-ui/Dressly/compare/v1.6.0...v1.7.0) (2026-04-17)
+
+
+### Features
+
+* detect colors from image ([b558063](https://github.com/Patrick-beep-ui/Dressly/commit/b5580636b235f1a7e9f78d91f8ded79061e1d7c7))
+* detect colors from image ([83c45b2](https://github.com/Patrick-beep-ui/Dressly/commit/83c45b26c76b9ab766c9c3ba8944ad92a69f38d7))
+
 ## [1.6.0](https://github.com/Patrick-beep-ui/Dressly/compare/v1.5.0...v1.6.0) (2026-04-17)
 
 
