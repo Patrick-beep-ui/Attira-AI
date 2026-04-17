@@ -16,9 +16,6 @@ export class OutfitModule {
       generationHistory: data.generationHistory || [],
       stylePreferences: data.stylePreferences || []
     });
-
     return this.ai.run(prompt);
-
   }
-
 }
