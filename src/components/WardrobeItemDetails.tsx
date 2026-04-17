@@ -7,6 +7,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Trash2, Save } from "lucide-react";
+import { ColorPicker } from "@/components/ColorPicker";
 
 interface WardrobeItem {
   id: string;
@@ -125,8 +126,10 @@ export function WardrobeItemDetail({ item, open, onOpenChange, onUpdated }: Prop
             <Input className="rounded-xl" value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label className="text-body-sm">Color</Label>
-            <Input className="rounded-xl" placeholder="e.g. Navy Blue" value={color} onChange={(e) => setColor(e.target.value)} />
+            <ColorPicker
+              value={color}
+              onChange={setColor}
+            />
           </div>
           <div className="space-y-2">
             <Label className="text-body-sm">Fabric</Label>
