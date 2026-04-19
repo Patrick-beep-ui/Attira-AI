@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export async function fetchWardrobeItems() {
+export async function fetchWardrobeItems(userId: string) {
   const { data, error } = await supabase
     .from("wardrobe_items")
     .select(`
@@ -13,7 +13,8 @@ export async function fetchWardrobeItems() {
       image_url,
       category_id,
       clothing_categories(name)
-    `);
+    `)
+    .eq("user_id", userId);
 
   if (error) throw error;
 

@@ -4,6 +4,10 @@ const PERSONAL_UPDATE_COOLDOWN_DAYS = 7;
 const STYLE_UPDATE_COOLDOWN_HOURS = 24;
 
 export type CreateUserProfileDTO = {
+  first_name?: string;
+  last_name?: string;
+  username?: string;
+
   height_cm: number;
   weight_kg: number;
 
@@ -30,7 +34,7 @@ const styleNameToId: Record<string, number> = {
 };
 
 export async function updateUserProfile(userId: string, dto: CreateUserProfileDTO) {
-  const payload = {
+  const payload: Record<string, unknown> = {
     height_cm: dto.height_cm,
     weight_kg: dto.weight_kg,
 
@@ -46,10 +50,14 @@ export async function updateUserProfile(userId: string, dto: CreateUserProfileDT
     timezone: dto.timezone,
   };
 
+  if (dto.first_name) payload.first_name = dto.first_name;
+  if (dto.last_name) payload.last_name = dto.last_name;
+  if (dto.username) payload.username = dto.username.toLowerCase();
+
   const { error } = await supabase
     .from("profiles")
     .update(payload)
-    .eq("id", userId);
+    .eq("user_id", userId);
 
   if (error) return { error };
 
@@ -293,4 +301,15 @@ export async function updateProfileBasic(userId: string, dto: { first_name?: str
     .eq("user_id", userId);
 
   return { error };
+}
+
+export async function checkUsernameAvailable(username: string): Promise<boolean> {
+  const normalized = username.toLowerCase();
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id")
+    .ilike("username", normalized);
+
+  if (error) throw error;
+  return !data || data.length === 0;
 }

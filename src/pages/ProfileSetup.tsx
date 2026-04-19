@@ -7,6 +7,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { updateUserProfile } from "@/services/profile-service";
 
 import StepIntro from "@/components/setup/StepIntro";
+import StepName from "@/components/setup/StepName";
 import StepPhysical from "@/components/setup/StepPhysical";
 import StepStyle from "@/components/setup/StepStyle";
 import StepLocation from "@/components/setup/StepLocation";
@@ -22,6 +23,7 @@ export default function ProfileSetup() {
   const { t } = useLanguage();
 
   const [state, setState] = useState<any>({
+    name: {},
     physical: {},
     style: {},
     location: {},
@@ -45,6 +47,7 @@ export default function ProfileSetup() {
     }
 
     const payload = {
+      ...state.name,
       ...state.physical,
       ...state.style,
       ...state.location,
@@ -63,6 +66,7 @@ export default function ProfileSetup() {
 
   const steps = [
     <StepIntro onNext={next} />,
+    <StepName data={state.name} onNext={update} next={next} />,
     <StepPhysical data={state.physical} onNext={update} next={next} />,
     <StepStyle data={state.style} onNext={update} next={next} back={back} />,
     <StepLocation data={state.location} onNext={update} next={next} back={back} />,
