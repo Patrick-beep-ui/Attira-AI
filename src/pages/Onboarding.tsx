@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 const steps = [
   {
     title: "Your Intelligent\nPersonal Stylist",
-    body: "Dressly combines fashion intelligence with your unique style to create outfits that feel distinctly you.",
+    body: "Attira combines fashion intelligence with your unique style to create outfits that feel distinctly you.",
   },
   {
     title: "Built Around\nYour Body & Life",
@@ -39,7 +39,7 @@ export default function Onboarding() {
             transition={{ duration: 0.3 }}
             className="space-y-4"
           >
-            <p className="text-caption uppercase tracking-widest text-primary">Dressly</p>
+            <p className="text-caption uppercase tracking-widest text-primary">Attira</p>
             <h1 className="whitespace-pre-line font-display text-display-1 text-foreground">
               {steps[step].title}
             </h1>

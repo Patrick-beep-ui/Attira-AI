@@ -24,7 +24,7 @@ export default function Subscription() {
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
             <Crown className="h-7 w-7 text-primary" />
           </div>
-          <h1 className="font-display text-display-1 text-foreground">Dressly Premium</h1>
+          <h1 className="font-display text-display-1 text-foreground">Attira Premium</h1>
           <p className="mt-2 text-body text-muted-foreground">Unlock the full power of your intelligent stylist.</p>
         </motion.div>
 

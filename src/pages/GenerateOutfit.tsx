@@ -74,7 +74,7 @@ export default function GenerateOutfit() {
           <Button
             onClick={handleGenerate}
             disabled={!occasion}
-            className="w-full gap-2 rounded-xl py-6 text-body font-medium animate-fade-slide-up"
+            className="w-full gap-2 rounded-xl py-6 font-medium animate-fade-slide-up"
             style={{ animationDelay: "200ms" }}
           >
             <Sparkles className="h-4 w-4" />

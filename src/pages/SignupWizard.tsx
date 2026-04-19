@@ -154,7 +154,7 @@ export default function SignupWizard() {
     <AppShell>
       <HeaderBar title="Signup" showBack />
       <div className="p-6 max-w-2xl mx-auto space-y-6">
-        <div className="text-lg font-semibold">Create your Dressly profile</div>
+        <div className="text-lg font-semibold">Create your Attira profile</div>
         {step === 1 && <StepAccount />}
         {step === 2 && <StepPhysical />}
         {step === 3 && <StepStyle />}
