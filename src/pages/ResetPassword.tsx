@@ -24,7 +24,7 @@ export default function ResetPassword() {
   return (
     <div className="flex min-h-[100dvh] flex-col justify-center bg-background px-6">
       <div className="mb-8">
-        <p className="text-caption uppercase tracking-widest text-primary">Dressly</p>
+        <p className="text-caption uppercase tracking-widest text-primary">Attira</p>
         <h1 className="mt-2 font-display text-display-1 text-foreground">New Password</h1>
         <p className="mt-2 text-body text-muted-foreground">Choose a new password for your account.</p>
       </div>

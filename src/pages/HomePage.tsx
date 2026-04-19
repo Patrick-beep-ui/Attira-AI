@@ -89,7 +89,7 @@ useEffect(() => {
       <div className="px-4 pt-14 pb-20">
         {/* Greeting */}
         <div className="mb-6">
-          <p className="text-caption uppercase tracking-wider text-primary">Dressly</p>
+          <p className="text-caption uppercase tracking-wider text-primary">Attira</p>
           <h1 className="mt-1 font-display text-display-2 text-foreground">{greeting()}</h1>
           <p className="mt-1 text-body-sm text-muted-foreground">{dateStr}</p>
         </div>
