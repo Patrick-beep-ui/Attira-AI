@@ -4,12 +4,13 @@ import { Button } from "@/components/ui/button";
 import { TagChip } from "@/components/TagChip";
 import { MapPin } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { getProfile, getStylePreferences, canUpdatePersonalData, canUpdateStyleData, updatePersonalData, PersonalDataUpdateResult, StyleUpdateResult } from "@/services/profile-service";
 
 type CountryData = { iso2: string; country: string; cities: string[] };
 type CountryItem = { code: string; name: string };
 
-const fitPreferences = ["Tight", "Regular", "Relaxed", "Oversized"];
+const fitPreferences = ["tight", "regular", "relaxed", "oversized"];
 const stylePreferences = ["Minimalist", "Streetwear", "Business Casual", "Elegant", "Sporty"];
 
 const centerAmericanCodes = ["BZ","CR","SV","GT","HN","NI","PA"];
@@ -17,6 +18,7 @@ const centerAmericanCodes = ["BZ","CR","SV","GT","HN","NI","PA"];
 export default function BodyProfile() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t, tValue } = useLanguage();
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -187,13 +189,13 @@ export default function BodyProfile() {
     const hasStyleChanges = !!profile.fit || profile.styles.length > 0;
     
     if (hasPersonalChanges && !personalCooldown?.canUpdate) {
-      setError(`Personal data can only be updated once per 7 days. ${personalCooldown?.daysRemaining} days remaining.`);
+      setError(t("body_profile.personal_update_error", { count: personalCooldown?.daysRemaining || 0 }));
       setSaving(false);
       return;
     }
     
     if (hasStyleChanges && !styleCooldown?.canUpdate) {
-      setError(`Style preferences can only be updated once per 24 hours. ${styleCooldown?.hoursRemaining} hours remaining.`);
+      setError(t("body_profile.style_update_error", { count: styleCooldown?.hoursRemaining || 0 }));
       setSaving(false);
       return;
     }
@@ -232,22 +234,22 @@ export default function BodyProfile() {
     return (
       <div className="flex min-h-[100dvh] flex-col bg-background px-6 pb-12 pt-16">
         <div className="space-y-6">
-          <h2 className="font-display text-display-2 text-foreground">Update Profile?</h2>
+          <h2 className="font-display text-display-2 text-foreground">{t("body_profile.update_profile")}</h2>
           
           <div className="rounded-xl border border-yellow-500/50 bg-yellow-500/10 p-4">
             <p className="text-body-sm text-yellow-600 dark:text-yellow-400">
-              <strong>Note:</strong> Personal data (height, weight, location) can only be updated once every 7 days. Style preferences (fit, styles) can be updated once every 24 hours. Your body type is permanent and cannot be changed.
+              <strong>{t("body_profile.disclaimer_title")}</strong> {t("body_profile.disclaimer_personal")}
             </p>
           </div>
           
           <div className="space-y-2">
-            <p className="text-body text-muted-foreground">Your changes:</p>
+            <p className="text-body text-muted-foreground">{t("body_profile.your_changes")}</p>
             <ul className="text-body-sm space-y-1 text-foreground">
-              {profile.height && <li>Height: {profile.height} cm</li>}
-              {profile.weight && <li>Weight: {profile.weight} kg</li>}
-              {profile.fit && <li>Preferred Fit: {profile.fit}</li>}
-              {profile.city && <li>Location: {profile.city}</li>}
-              {profile.styles.length > 0 && <li>Styles: {profile.styles.join(", ")}</li>}
+              {profile.height && <li>{t("body_profile.height")}: {profile.height} cm</li>}
+              {profile.weight && <li>{t("body_profile.weight")}: {profile.weight} kg</li>}
+              {profile.fit && <li>{t("body_profile.preferred_fit_label")}: {tValue("fits", profile.fit)}</li>}
+              {profile.city && <li>{t("body_profile.location_label")}: {profile.city}</li>}
+              {profile.styles.length > 0 && <li>{t("body_profile.styles_label")}: {profile.styles.map(s => tValue("style_preferences", s)).join(", ")}</li>}
             </ul>
           </div>
           
@@ -256,17 +258,17 @@ export default function BodyProfile() {
           )}
           
           {success && (
-            <p className="text-body-sm text-green-500">Profile updated successfully!</p>
+            <p className="text-body-sm text-green-500">{t("body_profile.profile_updated")}</p>
           )}
         </div>
         
         <div className="flex gap-3 pt-8">
           <Button variant="outline" onClick={() => setShowDisclaimer(false)} className="flex-1 rounded-xl py-6">
-            Cancel
+            {t("body_profile.cancel")}
           </Button>
           {!success && (
             <Button onClick={confirmSave} disabled={saving} className="flex-1 rounded-xl py-6 text-body font-medium">
-              {saving ? "Saving..." : "Confirm"}
+              {saving ? t("body_profile.saving") : t("body_profile.confirm")}
             </Button>
           )}
         </div>
@@ -277,10 +279,10 @@ export default function BodyProfile() {
   return (
     <div className="flex min-h-[100dvh] flex-col bg-background px-6 pb-12 pt-16">
       <div className="mb-6">
-        <h1 className="font-display text-display-2 text-foreground">Edit Profile</h1>
-        <p className="mt-1 text-body text-muted-foreground">Update your personal information.</p>
+        <h1 className="font-display text-display-2 text-foreground">{t("body_profile.edit_profile")}</h1>
+        <p className="mt-1 text-body text-muted-foreground">{t("body_profile.update_subtitle")}</p>
         <p className="mt-3 text-body-sm text-muted-foreground italic">
-          Keeping your info accurate helps us personalize outfits that fit your unique style and preferences.
+          {t("body_profile.update_hint")}
         </p>
       </div>
 
@@ -292,52 +294,52 @@ export default function BodyProfile() {
 
       {success && (
         <div className="mb-4 rounded-xl border border-green-500/50 bg-green-500/10 p-4">
-          <p className="text-body-sm text-green-500">Profile updated successfully!</p>
+          <p className="text-body-sm text-green-500">{t("body_profile.profile_updated")}</p>
         </div>
       )}
 
       <div className="flex-1 space-y-8 overflow-y-auto">
         <div className="space-y-3">
-          <p className="text-body-sm font-medium text-foreground">Body Type <span className="text-red-500">*</span></p>
-          <p className="text-body-sm text-muted-foreground">{profile.bodyType || "Not set"}</p>
-          <p className="text-body-xs text-muted-foreground">Body type is permanent and cannot be changed.</p>
+          <p className="text-body-sm font-medium text-foreground">{t("body_profile.body_type")} <span className="text-red-500">*</span></p>
+          <p className="text-body-sm text-muted-foreground">{profile.bodyType ? tValue("body_type_names", profile.bodyType) : t("body_profile.not_set")}</p>
+          <p className="text-body-xs text-muted-foreground">{t("body_profile.body_type_permanent")}</p>
         </div>
 
         <div className="space-y-3">
-          <p className="text-body-sm font-medium text-foreground">Measurements</p>
+          <p className="text-body-sm font-medium text-foreground">{t("body_profile.measurements")}</p>
           <input
             className="rounded-xl border border-border bg-card w-full py-3 px-3"
             value={profile.height}
             onChange={(e) => setProfile((p) => ({ ...p, height: e.target.value }))}
-            placeholder="Height (cm)"
+            placeholder={t("body_profile.height_placeholder")}
             type="number"
           />
           <input
             className="rounded-xl border border-border bg-card w-full py-3 px-3"
             value={profile.weight}
             onChange={(e) => setProfile((p) => ({ ...p, weight: e.target.value }))}
-            placeholder="Weight (kg)"
+            placeholder={t("body_profile.weight_placeholder")}
             type="number"
           />
           {!personalCooldown?.canUpdate && personalCooldown?.lastUpdate && (
             <p className="text-body-xs text-muted-foreground">
-              Personal data can be updated in {personalCooldown.daysRemaining} days.
+              {t("body_profile.personal_update_days", { count: personalCooldown.daysRemaining })}
             </p>
           )}
           {!styleCooldown?.canUpdate && styleCooldown?.lastUpdate && (
             <p className="text-body-xs text-muted-foreground">
-              Style preferences can be updated in {styleCooldown.hoursRemaining} hours.
+              {t("body_profile.style_update_hours", { count: styleCooldown.hoursRemaining })}
             </p>
           )}
         </div>
 
         <div className="space-y-3">
-          <p className="text-body-sm font-medium text-foreground">Preferred Fit</p>
+          <p className="text-body-sm font-medium text-foreground">{t("body_profile.preferred_fit")}</p>
           <div className="flex flex-wrap gap-2">
             {fitPreferences.map((f) => (
               <TagChip
                 key={f}
-                label={f}
+                label={tValue("fits", f.toLowerCase())}
                 active={profile.fit === f}
                 onClick={() => setProfile((p) => ({ ...p, fit: f }))}
               />
@@ -346,12 +348,12 @@ export default function BodyProfile() {
         </div>
 
         <div className="space-y-3">
-          <p className="text-body-sm font-medium text-foreground">Style Preferences (max 2)</p>
+          <p className="text-body-sm font-medium text-foreground">{t("body_profile.style_preferences")}</p>
           <div className="flex flex-wrap gap-2">
             {stylePreferences.map((s) => (
               <TagChip
                 key={s}
-                label={s}
+                label={tValue("style_preferences", s)}
                 active={profile.styles.includes(s)}
                 onClick={() => toggleStyle(s)}
               />
@@ -360,7 +362,7 @@ export default function BodyProfile() {
         </div>
 
         <div className="space-y-3">
-          <p className="text-body-sm font-medium text-foreground">Location</p>
+          <p className="text-body-sm font-medium text-foreground">{t("body_profile.location")}</p>
           
           <select
             value={profile.countryCode}
@@ -369,7 +371,7 @@ export default function BodyProfile() {
             }}
             className="rounded-xl border border-border bg-card w-full py-3 px-3 text-body"
           >
-            <option value="">Select country</option>
+            <option value="">{t("body_profile.select_country")}</option>
             {filteredCountries.map((c) => (
               <option key={c.code} value={c.code}>{c.name}</option>
             ))}
@@ -385,7 +387,7 @@ export default function BodyProfile() {
                 setProfile((p) => ({ ...p, latitude: null, longitude: null }));
               }}
               onFocus={() => profile.countryCode && setShowCityDropdown(true)}
-              placeholder={profile.countryCode ? "Search or select city" : "Select country first"}
+              placeholder={profile.countryCode ? t("body_profile.search_city") : t("body_profile.select_country_first")}
               disabled={!profile.countryCode}
               className="w-full rounded-xl border border-border bg-card py-3 px-3 text-body"
             />
@@ -421,18 +423,18 @@ export default function BodyProfile() {
             className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl border border-border bg-card text-body-sm text-muted-foreground hover:text-foreground hover:border-gray-400 transition-colors"
           >
             <MapPin className="w-4 h-4" />
-            Use my current location
+            {t("body_profile.use_current_location")}
           </button>
           
           {profile.latitude && profile.longitude && (
             <p className="text-body-xs text-muted-foreground">
-              Location set: {profile.latitude.toFixed(2)}, {profile.longitude.toFixed(2)}
+              {t("body_profile.location_set", { lat: profile.latitude.toFixed(2), lng: profile.longitude.toFixed(2) })}
             </p>
           )}
           
           {(profile.latitude === null || profile.longitude === null) && profile.city && (
             <p className="text-body-xs text-yellow-600">
-              Tip: Enable location for accurate weather-based outfits
+              {t("body_profile.location_tip")}
             </p>
           )}
         </div>
@@ -440,10 +442,10 @@ export default function BodyProfile() {
 
       <div className="flex gap-3 pt-6">
         <Button variant="outline" onClick={() => navigate("/settings")} className="flex-1 rounded-xl py-6">
-          Cancel
+          {t("body_profile.cancel")}
         </Button>
         <Button onClick={handleSave} disabled={!canSave} className="flex-1 rounded-xl py-6 text-body font-medium">
-          Save Changes
+          {t("body_profile.save_changes")}
         </Button>
       </div>
     </div>

@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
 import { Loader2, Trash2, Save } from "lucide-react";
 import { ColorPicker } from "@/components/ColorPicker";
@@ -31,6 +32,7 @@ interface Props {
 
 
 export function WardrobeItemDetail({ item, open, onOpenChange, onUpdated }: Props) {
+  const { t, tValue } = useLanguage();
   const [name, setName] = useState("");
   const [color, setColor] = useState("");
   const [fabric, setFabric] = useState("");
@@ -107,7 +109,7 @@ export function WardrobeItemDetail({ item, open, onOpenChange, onUpdated }: Prop
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="rounded-t-2xl px-4 pb-8 pt-6 max-h-[90vh] overflow-y-auto">
         <SheetHeader className="mb-4">
-          <SheetTitle className="font-display text-display-3">Item Details</SheetTitle>
+          <SheetTitle className="font-display text-display-3">{t("wardrobe.item_details")}</SheetTitle>
         </SheetHeader>
 
         {/* Large Image */}
@@ -122,7 +124,7 @@ export function WardrobeItemDetail({ item, open, onOpenChange, onUpdated }: Prop
         {/* Editable Fields */}
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label className="text-body-sm">Name</Label>
+            <Label className="text-body-sm">{t("wardrobe.name")}</Label>
             <Input className="rounded-xl" value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div className="space-y-2">
@@ -132,40 +134,40 @@ export function WardrobeItemDetail({ item, open, onOpenChange, onUpdated }: Prop
             />
           </div>
           <div className="space-y-2">
-            <Label className="text-body-sm">Fabric</Label>
-            <Input className="rounded-xl" placeholder="e.g. Cotton, Wool" value={fabric} onChange={(e) => setFabric(e.target.value)} />
+            <Label className="text-body-sm">{t("wardrobe.fabric")} <span className="text-muted-foreground">{t("wardrobe.optional_recommended")}</span></Label>
+            <Input className="rounded-xl" placeholder={t("wardrobe.fabric_placeholder")} value={fabric} onChange={(e) => setFabric(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label className="text-body-sm">Size</Label>
-            <Input className="rounded-xl" placeholder="e.g. M, 32W 30L" value={size} onChange={(e) => setSize(e.target.value)} />
+            <Label className="text-body-sm">{t("wardrobe.size")} <span className="text-muted-foreground">{t("wardrobe.optional_recommended")}</span></Label>
+            <Input className="rounded-xl" placeholder={t("wardrobe.size_placeholder")} value={size} onChange={(e) => setSize(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label className="text-body-sm">Brand</Label>
-            <Input className="rounded-xl" placeholder="e.g. Uniqlo, Nike" value={brand} onChange={(e) => setBrand(e.target.value)} />
+            <Label className="text-body-sm">{t("wardrobe.brand")} <span className="text-muted-foreground">{t("wardrobe.optional_recommended")}</span></Label>
+            <Input className="rounded-xl" placeholder={t("wardrobe.brand_placeholder")} value={brand} onChange={(e) => setBrand(e.target.value)} />
           </div>
-          <p className="text-caption text-muted-foreground">Category: {item.category_name || "Unknown"}</p>
+          <p className="text-caption text-muted-foreground">{t("wardrobe.category")}: {item.category_name ? tValue("categories", item.category_name) : "Unknown"}</p>
 
           <Button onClick={handleSave} disabled={saving} className="w-full rounded-xl py-5">
             {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-            {saving ? "Saving..." : "Save Changes"}
+            {saving ? t("wardrobe.saving") : t("wardrobe.save_changes")}
           </Button>
 
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="destructive" className="w-full rounded-xl py-5">
                 <Trash2 className="h-4 w-4 mr-2" />
-                Delete Item
+                {t("wardrobe.delete_item")}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent className="mx-4 max-w-sm rounded-2xl">
               <AlertDialogHeader>
-                <AlertDialogTitle>Delete "{item.name}"?</AlertDialogTitle>
-                <AlertDialogDescription>This will permanently remove this item from your wardrobe.</AlertDialogDescription>
+                <AlertDialogTitle>{t("wardrobe.delete_confirm_title").replace("{name}", item.name)}</AlertDialogTitle>
+                <AlertDialogDescription>{t("wardrobe.delete_confirm_description")}</AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
+                <AlertDialogCancel className="rounded-xl">{t("common.cancel")}</AlertDialogCancel>
                 <AlertDialogAction onClick={handleDelete} disabled={deleting} className="rounded-xl">
-                  {deleting ? "Deleting..." : "Delete"}
+                  {deleting ? t("wardrobe.deleting") : t("common.delete")}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

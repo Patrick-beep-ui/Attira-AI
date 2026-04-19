@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getTodaysLook } from "@/services/ai-service";
 import { getPublicOutfits, toggleLike, getLikeCount, getUserLikes } from "@/services/outfit-service";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
 import { Sparkles, Heart, MessageCircle } from "lucide-react";
 import { motion } from "framer-motion";
@@ -33,6 +34,7 @@ interface FeedOutfit {
 
 export default function HomePage() {
   const { user } = useAuth();
+  const { t, tValue, language } = useLanguage();
   const navigate = useNavigate();
   const todaysLook = getTodaysLook();
 
@@ -71,20 +73,20 @@ useEffect(() => {
 
   const greeting = () => {
     const h = new Date().getHours();
-    if (h < 12) return "Good Morning";
-    if (h < 18) return "Good Afternoon";
-    return "Good Evening";
+    if (h < 12) return t("home.greeting_morning");
+    if (h < 18) return t("home.greeting_afternoon");
+    return t("home.greeting_evening");
   };
 
-  const dateStr = new Date().toLocaleDateString("en-US", {
+  const dateStr = new Date().toLocaleDateString(language === "es" ? "es-ES" : "en-US", {
     weekday: "long",
     month: "long",
     day: "numeric",
-  });
+  }).replace(/^./, (c) => c.toUpperCase());
 
   return (
     <AppShell>
-      <HeaderBar title="Feed" />
+      <HeaderBar title={t("home.feed")} />
       
       <div className="px-4 pt-14 pb-20">
         {/* Greeting */}
@@ -97,13 +99,13 @@ useEffect(() => {
         {/* Generate Button */}
         <Button onClick={() => navigate("/generate")} className="w-full gap-2 rounded-xl py-6 mb-6">
           <Sparkles className="h-4 w-4" />
-          Generate Your Outfit
+          {t("home.generate_outfit")}
         </Button>
 
         {/* Feed Section */}
         <section>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-display text-display-3 text-foreground">Community Looks</h2>
+            <h2 className="font-display text-display-3 text-foreground">{t("home.community_looks")}</h2>
           </div>
 
           {loading ? (
@@ -114,9 +116,9 @@ useEffect(() => {
             </div>
           ) : feed.length === 0 ? (
             <div className="py-12 text-center">
-              <p className="text-body text-muted-foreground">No public outfits yet.</p>
+              <p className="text-body text-muted-foreground">{t("home.no_outfits")}</p>
               <p className="text-body-sm text-muted-foreground mt-1">
-                Be the first to publish an outfit!
+                {t("home.be_first")}
               </p>
             </div>
           ) : (
@@ -165,6 +167,7 @@ function FeedCard({
 }) {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t, tValue } = useLanguage();
   const compositionUrl = outfit.composition_url;
   
   const [isLiked, setIsLiked] = useState(initialIsLiked);
@@ -265,8 +268,8 @@ function FeedCard({
       {/* Outfit Info */}
       <div className="p-4 space-y-3">
         <div className="flex flex-wrap gap-2">
-          {outfit.occasion && <TagChip label={outfit.occasion} active />}
-          {outfit.formality && <TagChip label={outfit.formality} active={false} />}
+          {outfit.occasion && <TagChip label={tValue("occasions", outfit.occasion)} active />}
+          {outfit.formality && <TagChip label={tValue("formality", outfit.formality)} active={false} />}
         </div>
         
         {outfit.styling_notes && (
@@ -282,11 +285,11 @@ function FeedCard({
             className={`flex items-center gap-1.5 text-body-sm ${isLiked ? 'text-red-500' : 'text-muted-foreground hover:text-foreground'}`}
           >
             <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
-            <span>{likeCount > 0 ? likeCount : 'Like'}</span>
+            <span>{likeCount > 0 ? likeCount : t("home.like")}</span>
           </button>
           <button className="flex items-center gap-1.5 text-body-sm text-muted-foreground hover:text-foreground">
             <MessageCircle className="h-4 w-4" />
-            <span>Comment</span>
+            <span>{t("home.comment")}</span>
           </button>
         </div>
       </div>

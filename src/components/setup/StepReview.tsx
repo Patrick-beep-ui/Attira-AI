@@ -1,4 +1,7 @@
+import { useLanguage } from "@/contexts/LanguageContext";
+
 export default function StepReview({ data, onSubmit, back }: any) {
+  const { t, tValue } = useLanguage();
   const physical = data?.physical || {};
   const style = data?.style || {};
   const location = data?.location || {};
@@ -6,36 +9,32 @@ export default function StepReview({ data, onSubmit, back }: any) {
 
   const rows = [
     // Physical
-    { section: "Physical", items: [
-      { k: "Height", v: `${physical.height_cm ?? "-"} cm` },
-      { k: "Weight", v: `${physical.weight_kg ?? "-"} kg` },
+    { section: t("step_review.physical"), items: [
+      { k: t("step_review.height"), v: `${physical.height_cm ?? "-"} cm` },
+      { k: t("step_review.weight"), v: `${physical.weight_kg ?? "-"} kg` },
     ]},
 
     // Style
-    { section: "Style", items: [
-      { k: "Body Type", v: style.body_type ?? "-" },
-      { k: "Fit", v: style.preferred_fit ?? "-" },
+    { section: t("step_review.style"), items: [
+      { k: t("step_review.body_type"), v: style.body_type ? tValue("body_type_names", style.body_type) : "-" },
+      { k: t("step_review.fit"), v: style.preferred_fit ? tValue("fits", style.preferred_fit) : "-" },
     ]},
 
     // Location
-    { section: "Location", items: [
-      { k: "Country", v: location.country_code ?? "-" },
-      { k: "City", v: location.city ?? "-" },
-      geo.timezone ? { k: "Timezone", v: geo.timezone } : null,
-      //geo.latitude ? { k: "Latitude", v: String(geo.latitude) } : null,
-      //geo.longitude ? { k: "Longitude", v: String(geo.longitude) } : null,
+    { section: t("step_review.location"), items: [
+      { k: t("step_review.country"), v: location.country_code ?? "-" },
+      { k: t("step_review.city"), v: location.city ?? "-" },
+      geo.timezone ? { k: t("step_review.timezone"), v: geo.timezone } : null,
     ].filter(Boolean)},
   ];
 
   const handleConfirm = () => {
     onSubmit();
   };
-  
-  console.log("FULL PROFILE DATA:", data); 
 
   return (
     <div className="space-y-6">
-      <h1 className="text-display-3">Review & Confirm</h1>
+      <h1 className="text-display-3">{t("step_review.title")}</h1>
 
       <div className="space-y-4">
         {rows.map((section) => (
@@ -62,14 +61,14 @@ export default function StepReview({ data, onSubmit, back }: any) {
 
       <div className="flex gap-2 pt-2">
         <button onClick={back} className="px-4 py-2 rounded">
-          Back
+          {t("step_review.back")}
         </button>
 
         <button
           onClick={handleConfirm}
           className="px-4 py-2 rounded bg-primary text-white"
         >
-          Confirm & Continue
+          {t("step_review.confirm_continue")}
         </button>
       </div>
     </div>

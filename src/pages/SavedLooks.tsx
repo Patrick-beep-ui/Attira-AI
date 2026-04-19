@@ -4,6 +4,7 @@ import { OutfitCard } from "@/components/OutfitCard";
 import { TagChip } from "@/components/TagChip";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-const filterOptions = ["All", "Work", "Casual", "Date Night", "Event"];
+const filterOptions = ["all", "work", "casual", "date-night", "event"];
+
+const getFilterLabel = (filter: string, tValue: (type: string, value: string) => string) => {
+  if (filter === "all") return tValue("categories", "all");
+  return tValue("occasions", filter);
+};
 
 interface SavedLook extends GeneratedOutfit {
   formality?: string;
@@ -36,6 +42,7 @@ interface SavedLook extends GeneratedOutfit {
 
 export default function SavedLooks() {
   const { user } = useAuth();
+  const { t, tValue } = useLanguage();
   const [filter, setFilter] = useState("All");
   const [looks, setLooks] = useState<SavedLook[]>([]);
   const [loading, setLoading] = useState(true);
@@ -165,11 +172,11 @@ const handleDelete = async () => {
 
   return (
     <AppShell>
-      <HeaderBar title="Saved Looks" />
+      <HeaderBar title={t("outfit.saved_looks")} />
 
       <div className="flex gap-2 overflow-x-auto px-4 pb-3 pt-1 scrollbar-none">
         {filterOptions.map((f) => (
-          <TagChip key={f} label={f} active={filter === f} onClick={() => setFilter(f)} />
+          <TagChip key={f} label={getFilterLabel(f, tValue)} active={filter === f} onClick={() => setFilter(f)} />
         ))}
       </div>
 
@@ -186,7 +193,7 @@ const handleDelete = async () => {
           ))}
           {filtered.length === 0 && (
             <div className="col-span-2 py-16 text-center">
-              <p className="text-body text-muted-foreground">No saved looks yet.</p>
+              <p className="text-body text-muted-foreground">{t("outfit.no_saved_looks")}</p>
             </div>
           )}
         </div>
@@ -211,7 +218,7 @@ const handleDelete = async () => {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="mb-4 flex items-center justify-between">
-                <h2 className="font-display text-display-2 text-foreground">Look Details</h2>
+                <h2 className="font-display text-display-2 text-foreground">{t("outfit.look_details")}</h2>
                 <button onClick={() => setSelectedLook(null)} className="rounded-full p-1.5 hover:bg-muted">
                   <X className="h-5 w-5 text-muted-foreground" />
                 </button>
@@ -219,16 +226,16 @@ const handleDelete = async () => {
 
               {/* Occasion & Formality */}
               <div className="mb-4 flex flex-wrap gap-2">
-                <TagChip label={selectedLook.occasion} active />
+                <TagChip label={tValue("occasions", selectedLook.occasion)} active />
                 {selectedLook.formality && (
-                  <TagChip label={selectedLook.formality} active={false} />
+                  <TagChip label={tValue("formality", selectedLook.formality)} active={false} />
                 )}
                 <AiBadge label={`${Math.round(selectedLook.confidence * 100)}% match`} />
               </div>
 
               {/* Items */}
               <div className="mb-4 space-y-3">
-                <p className="text-caption font-medium uppercase text-muted-foreground">Outfit Items</p>
+                <p className="text-caption font-medium uppercase text-muted-foreground">{t("outfit.outfit_items")}</p>
                 {selectedLook.items.map((item) => (
                   <div key={item.id} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3">
                     {item.imageUrl ? (
@@ -238,7 +245,7 @@ const handleDelete = async () => {
                     )}
                     <div>
                       <p className="text-body font-medium text-foreground">{item.name}</p>
-                      <p className="text-caption uppercase text-muted-foreground">{item.category}</p>
+                      <p className="text-caption uppercase text-muted-foreground">{tValue("categories", item.category)}</p>
                     </div>
                   </div>
                 ))}
@@ -246,13 +253,13 @@ const handleDelete = async () => {
 
               {/* Styling Notes */}
               <div className="mb-4 rounded-lg border border-primary/20 bg-primary/5 p-4">
-                <AiBadge label="Styling Notes" className="mb-2" />
+                <AiBadge label={t("outfit.styling_notes")} className="mb-2" />
                 <p className="text-body text-foreground">{selectedLook.stylingNotes}</p>
               </div>
 
               {/* Suggestion */}
               <div className="mb-6 rounded-lg border border-accent/30 bg-accent/10 p-4">
-                <p className="mb-1 text-caption font-medium uppercase text-muted-foreground">Tip</p>
+                <p className="mb-1 text-caption font-medium uppercase text-muted-foreground">{t("outfit.tip")}</p>
                 <p className="text-body-sm text-foreground">
                   {selectedLook.confidence >= 0.8
                     ? "This is a strong match! Consider adding complementary accessories to elevate the look further."
@@ -271,12 +278,12 @@ const handleDelete = async () => {
                   {selectedLook.is_public ? (
                     <>
                       <Lock className="h-4 w-4" />
-                      {publishing === selectedLook.id ? "..." : "Make Private"}
+                      {publishing === selectedLook.id ? "..." : t("outfit.make_private")}
                     </>
                   ) : (
                     <>
                       <Globe className="h-4 w-4" />
-                      {publishing === selectedLook.id ? "..." : "Publish"}
+                      {publishing === selectedLook.id ? "..." : t("outfit.publish")}
                     </>
                   )}
                 </Button>
@@ -290,7 +297,7 @@ const handleDelete = async () => {
                 disabled={sharing}
               >
                 <Share2 className="h-4 w-4" />
-                {sharing ? "..." : "Share"}
+                {sharing ? "..." : t("outfit.share")}
               </Button>
 
               {/* Delete */}
@@ -300,7 +307,7 @@ const handleDelete = async () => {
                 onClick={() => setDeleteTarget(selectedLook.id)}
               >
                 <Trash2 className="h-4 w-4" />
-                Delete Look
+                {t("outfit.delete_look")}
               </Button>
               <div className="h-20" aria-hidden="true" />
             </motion.div>
@@ -312,13 +319,13 @@ const handleDelete = async () => {
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete this look?</AlertDialogTitle>
-            <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+            <AlertDialogTitle>{t("outfit.delete_this_look")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("outfit.action_cannot_be_undone")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleting}>{t("outfit.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} disabled={deleting}>
-              {deleting ? "Deleting..." : "Delete"}
+              {deleting ? t("outfit.deleting") : t("outfit.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function StepGeo({ onNext, next, back }: any) {
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
 
   const handleAllow = () => {
@@ -43,11 +45,11 @@ export default function StepGeo({ onNext, next, back }: any) {
   return (
     <div className="space-y-6">
       <h1 className="text-xl font-semibold">
-        Use your current location?
+        {t("step_geo.title")}
       </h1>
 
       <p className="text-muted-foreground">
-        This helps us generate weather-aware outfits.
+        {t("step_geo.subtitle")}
       </p>
 
       <div className="flex gap-4">
@@ -56,14 +58,14 @@ export default function StepGeo({ onNext, next, back }: any) {
           disabled={loading}
           className="flex-1 bg-primary text-white py-3 rounded-xl"
         >
-          {loading ? "Getting location..." : "Allow Location"}
+          {loading ? t("step_geo.getting_location") : t("step_geo.allow_location")}
         </button>
 
         <button
           onClick={handleSkip}
           className="flex-1 border py-3 rounded-xl"
         >
-          Skip
+          {t("step_geo.skip")}
         </button>
       </div>
     </div>
