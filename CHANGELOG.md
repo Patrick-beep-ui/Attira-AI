@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.7.1](https://github.com/Patrick-beep-ui/Dressly/compare/v1.7.0...v1.7.1) (2026-04-19)
+
+
+### Bug Fixes
+
+* Change Dressly name to Attira ([6023c48](https://github.com/Patrick-beep-ui/Dressly/commit/6023c4804007e97a46a75d884cc773a8f26dcaa3))
+* Change Dressly name to Attira ([9a1bf61](https://github.com/Patrick-beep-ui/Dressly/commit/9a1bf6123d642acf1a7270362ab6018f644d337e))
+
 ## [1.7.0](https://github.com/Patrick-beep-ui/Dressly/compare/v1.6.0...v1.7.0) (2026-04-17)
 
 
