@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getOutfitById, getOutfitItems, shareOutfit } from "@/services/outfit-service";
 import { getProfile } from "@/services/profile-service";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { User, X, Heart, MessageCircle, Share2, Globe, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
@@ -50,6 +51,7 @@ function adjustSvg(svgString: string): string {
 export default function OutfitPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { t, tValue } = useLanguage();
   const [outfit, setOutfit] = useState<OutfitData | null>(null);
   const [creatorProfile, setCreatorProfile] = useState<ProfileData | null>(null);
   const [items, setItems] = useState<any[]>([]);
@@ -183,8 +185,8 @@ export default function OutfitPage() {
 
         {/* Occasion & Formality */}
         <div className="flex flex-wrap gap-2">
-          {outfit.occasion && <TagChip label={outfit.occasion} active />}
-          {outfit.formality && <TagChip label={outfit.formality} active={false} />}
+          {outfit.occasion && <TagChip label={tValue("occasions", outfit.occasion)} active />}
+          {outfit.formality && <TagChip label={tValue("formality", outfit.formality)} active={false} />}
         </div>
 
         {/* Confidence */}
@@ -202,7 +204,7 @@ export default function OutfitPage() {
 
         {/* Items */}
         <div className="space-y-3">
-          <p className="text-caption font-medium uppercase text-muted-foreground">Items in this outfit</p>
+          <p className="text-caption font-medium uppercase text-muted-foreground">{t("outfit_page.items_in_outfit")}</p>
           {wardrobeItems.length > 0 ? (
             wardrobeItems.map((item: any) => (
               <div key={item.id} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3">
@@ -221,13 +223,13 @@ export default function OutfitPage() {
                 <div>
                   <p className="text-body font-medium text-foreground">{item.name}</p>
                   <p className="text-caption uppercase text-muted-foreground">
-                    {item.clothing_categories?.name || "Clothing"}
+                    {item.clothing_categories?.name ? tValue("categories", item.clothing_categories.name) : "Clothing"}
                   </p>
                 </div>
               </div>
             ))
           ) : (
-            <p className="text-body-sm text-muted-foreground">No item details available</p>
+            <p className="text-body-sm text-muted-foreground">{t("outfit_page.no_item_details")}</p>
           )}
         </div>
 
@@ -241,7 +243,7 @@ export default function OutfitPage() {
             }}
           >
             <Share2 className="h-4 w-4" />
-            Share
+            {t("outfit.share")}
           </Button>
         </div>
       </div>

@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, Palette } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 import {
   isValidHex,
   normalizeHex,
@@ -27,6 +28,7 @@ export function ColorPicker({
   label = "Color",
   showDetectButton = false,
 }: ColorPickerProps) {
+  const { t } = useLanguage();
   const [hexValue, setHexValue] = useState<string>("#000000");
   const [colorNameInput, setColorNameInput] = useState<string>("");
   const [warning, setWarning] = useState<string | null>(null);
@@ -91,10 +93,10 @@ export function ColorPicker({
       } else {
         onChange(normalized);
         setColorNameInput(normalized);
-        setWarning("No exact name found, using HEX");
+        setWarning(t("wardrobe.no_exact_name_found"));
       }
     } else {
-      setWarning("Invalid hex format");
+      setWarning(t("wardrobe.invalid_hex_format"));
     }
   };
 
@@ -117,7 +119,7 @@ export function ColorPicker({
       setWarning(null);
       onChange(name);
     } else {
-      setWarning(`"${name}" not recognized — keeping input`);
+      setWarning(`"${name}" ${t("wardrobe.not_recognized")}`);
       onChange(name);
     }
   };
@@ -125,7 +127,7 @@ export function ColorPicker({
   return (
     <div className="space-y-3">
       <Label className="text-body-sm">
-        {label} <span className="text-muted-foreground">(optional)</span>
+        {label} <span className="text-muted-foreground">{t("wardrobe.optional")}</span>
       </Label>
 
       <div className="flex items-center gap-3">
@@ -138,7 +140,7 @@ export function ColorPicker({
 
         <Input
           type="text"
-          placeholder="e.g. Navy Blue"
+          placeholder={t("wardrobe.color_placeholder")}
           value={colorNameInput}
           onChange={(e) => handleNameChange(e.target.value)}
           className="flex-1 rounded-xl"
@@ -156,7 +158,7 @@ export function ColorPicker({
         <div className="flex items-center gap-2 text-muted-foreground text-sm">
           <Palette className="h-4 w-4" />
           <span>
-            Detected:{" "}
+            {t("wardrobe.detected")}{" "}
             <span style={{ color: detectedHex }}>{colorNameInput}</span>
           </span>
         </div>
@@ -171,7 +173,7 @@ export function ColorPicker({
           className="w-full rounded-xl"
         >
           <Palette className="h-4 w-4 mr-2" />
-          Detect Color from Image
+          {t("wardrobe.detect_color_from_image")}
         </Button>
       )}
     </div>

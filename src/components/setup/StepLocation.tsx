@@ -1,11 +1,13 @@
 import { useEffect, useState, useRef } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type CountryItem = { code: string; name: string };
 type CountryData = { iso2: string; country: string; cities: string[] };
 
 export default function StepLocation({ onNext, next, back }: any) {
+  const { t } = useLanguage();
   const [allCountries, setAllCountries] = useState<CountryData[]>([]);
   const [filteredCountries, setFilteredCountries] = useState<CountryItem[]>([]);
   const [country, setCountry] = useState<string>("");
@@ -101,20 +103,20 @@ export default function StepLocation({ onNext, next, back }: any) {
 
   return (
     <div>
-      <h1>Location</h1>
+      <h1>{t("step_location.title")}</h1>
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label>Country</Label>
+          <Label>{t("step_location.country")}</Label>
           <Select value={country} onValueChange={(val) => {
             setCountry(val);
             setCity("");
             setFilteredCities([]);
             setShowDropdown(false);
           }}>
-            <SelectTrigger className="w-full"><SelectValue placeholder={loading ? "Loading..." : "Select country"} /></SelectTrigger>
+            <SelectTrigger className="w-full"><SelectValue placeholder={loading ? t("step_location.loading") : t("step_location.select_country")} /></SelectTrigger>
             <SelectContent>
               {loading ? (
-                <SelectItem value="loading" disabled>Loading...</SelectItem>
+                <SelectItem value="loading" disabled>{t("step_location.loading")}</SelectItem>
               ) : (
                 filteredCountries.map((c) => (
                   <SelectItem key={c.code} value={c.code}>{c.name}</SelectItem>
@@ -124,11 +126,11 @@ export default function StepLocation({ onNext, next, back }: any) {
           </Select>
         </div>
         <div ref={dropdownRef} className="relative">
-          <Label>City</Label>
+          <Label>{t("step_location.city")}</Label>
           <input
             ref={inputRef}
             type="text"
-            placeholder={country ? "Search or select city" : "Select country first"}
+            placeholder={country ? t("step_location.search_city") : t("step_location.select_country_first")}
             value={city}
             onChange={(e) => handleCitySearch(e.target.value)}
             onFocus={() => country && setShowDropdown(true)}
@@ -152,8 +154,8 @@ export default function StepLocation({ onNext, next, back }: any) {
       </div>
 
       <div className="flex gap-2 mt-3">
-        <button onClick={back} className="px-4 py-2 rounded">Back</button>
-        <button onClick={handle} className="px-4 py-2 rounded bg-primary text-white" disabled={!canNext}>Continue</button>
+        <button onClick={back} className="px-4 py-2 rounded">{t("step_location.back")}</button>
+        <button onClick={handle} className="px-4 py-2 rounded bg-primary text-white" disabled={!canNext}>{t("step_location.continue")}</button>
       </div>
     </div>
   );

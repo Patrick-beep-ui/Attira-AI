@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
 import { Loader2, Trash2, Save } from "lucide-react";
 
@@ -25,6 +26,7 @@ interface Props {
 }
 
 export function WardrobeItemDetail({ item, open, onOpenChange, onUpdated }: Props) {
+  const { t, tValue } = useLanguage();
   const [name, setName] = useState("");
   const [color, setColor] = useState("");
   const [saving, setSaving] = useState(false);
@@ -94,7 +96,7 @@ export function WardrobeItemDetail({ item, open, onOpenChange, onUpdated }: Prop
             <Label className="text-body-sm">Color</Label>
             <Input className="rounded-xl" placeholder="e.g. Navy Blue" value={color} onChange={(e) => setColor(e.target.value)} />
           </div>
-          <p className="text-caption text-muted-foreground">Category: {item.category_name || "Unknown"}</p>
+          <p className="text-caption text-muted-foreground">{t("wardrobe.category")}: {item.category_name ? tValue("categories", item.category_name) : "Unknown"}</p>
 
           <Button onClick={handleSave} disabled={saving} className="w-full rounded-xl py-5">
             {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}

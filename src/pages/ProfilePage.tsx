@@ -4,10 +4,12 @@ import { Button } from "@/components/ui/button";
 import { TagChip } from "@/components/TagChip";
 import { User, Loader2, Edit2, Image as ImageIcon } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { getProfileByUsername, getPublicOutfitsByUser, updateProfileBasic, PublicProfile, PublicOutfit } from "@/services/profile-service";
 import { toast } from "sonner";
 
 export default function ProfilePage() {
+  const { t } = useLanguage();
   const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -60,7 +62,7 @@ export default function ProfilePage() {
       }
 
       if (!profileData) {
-        toast.error("Profile not found");
+        toast.error(t("profile.profile") + " " + t("common.error").toLowerCase());
         navigate("/");
         return;
       }
@@ -77,7 +79,7 @@ export default function ProfilePage() {
       setOutfits(outfitsData);
     } catch (err) {
       console.error("Failed to load profile:", err);
-      toast.error("Failed to load profile");
+      toast.error(t("profile.profile") + " " + t("common.error").toLowerCase());
     } finally {
       setLoading(false);
     }
@@ -93,11 +95,11 @@ export default function ProfilePage() {
         username: formData.username || null,
         profile_picture_url: formData.profile_picture_url || null,
       });
-      toast.success("Profile updated!");
+      toast.success(t("common.success") + "!");
       setEditing(false);
       loadProfile();
     } catch (err) {
-      toast.error("Failed to update profile");
+      toast.error(t("common.error"));
     } finally {
       setSaving(false);
     }
@@ -105,7 +107,7 @@ export default function ProfilePage() {
 
   const displayName = profile?.first_name || profile?.last_name 
     ? `${profile.first_name || ""} ${profile.last_name || ""}`.trim() 
-    : "Anonymous";
+    : t("profile.anonymous");
 
   const handleOutfitClick = (outfitId: string) => {
     navigate(`/outfit/${outfitId}`);
@@ -124,12 +126,12 @@ export default function ProfilePage() {
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border px-4 py-4">
         <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
-          Back
+          {t("profile.back")}
         </Button>
         {isOwnProfile && !editing && (
           <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
             <Edit2 className="mr-2 h-4 w-4" />
-            Edit
+            {t("profile.edit")}
           </Button>
         )}
       </div>
@@ -154,28 +156,28 @@ export default function ProfilePage() {
             <div className="space-y-4">
               <input
                 type="text"
-                placeholder="First name"
+                placeholder={t("profile.first_name")}
                 value={formData.first_name}
                 onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
                 className="w-full rounded-lg border border-border bg-card px-4 py-2 text-body text-foreground"
               />
               <input
                 type="text"
-                placeholder="Last name"
+                placeholder={t("profile.last_name")}
                 value={formData.last_name}
                 onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
                 className="w-full rounded-lg border border-border bg-card px-4 py-2 text-body text-foreground"
               />
               <input
                 type="text"
-                placeholder="Username"
+                placeholder={t("profile.username")}
                 value={formData.username}
                 onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                 className="w-full rounded-lg border border-border bg-card px-4 py-2 text-body text-foreground"
               />
               <input
                 type="text"
-                placeholder="Profile picture URL"
+                placeholder={t("profile.profile_picture_url")}
                 value={formData.profile_picture_url}
                 onChange={(e) => setFormData({ ...formData, profile_picture_url: e.target.value })}
                 className="w-full rounded-lg border border-border bg-card px-4 py-2 text-body text-foreground"
@@ -194,14 +196,14 @@ export default function ProfilePage() {
                     });
                   }}
                 >
-                  Cancel
+                  {t("profile.cancel")}
                 </Button>
                 <Button 
                   className="flex-1 bg-primary text-primary-foreground" 
                   onClick={handleSave}
                   disabled={saving}
                 >
-                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : t("profile.save")}
                 </Button>
               </div>
             </div>
@@ -225,14 +227,14 @@ export default function ProfilePage() {
         {/* Published Outfits */}
         <div className="border-t border-border pt-6">
           <h2 className="font-display text-display-3 text-foreground mb-4">
-            Published Looks
+            {t("profile.published_looks")}
           </h2>
           
           {outfits.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <ImageIcon className="mb-2 h-12 w-12 text-muted-foreground" />
               <p className="text-body text-muted-foreground">
-                No published outfits yet
+                {t("profile.no_published")}
               </p>
             </div>
           ) : (

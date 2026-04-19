@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type BodyType = "ectomorph" | "mesomorph" | "endomorph" | "athletic" | "average";
 type FitType = "tight" | "regular" | "relaxed" | "oversized";
@@ -8,15 +9,8 @@ const bodyTypes: BodyType[] = ["ectomorph","mesomorph","endomorph","athletic","a
 const fits: FitType[] = ["tight","regular","relaxed","oversized"];
 const styleOptions: StyleType[] = ["Minimalist", "Streetwear", "Business Casual", "Elegant", "Sporty"];
 
-const bodyTypeInfo = {
-  ectomorph: "Slim, lean build",
-  mesomorph: "Naturally muscular",
-  endomorph: "Broader, softer build",
-  athletic: "Active, balanced physique",
-  average: "Standard body proportions",
-};
-
 export default function StepStyle({ onNext, next, back, data }: any) {
+  const { t, tValue } = useLanguage();
   const [body, setBody] = useState<BodyType | "">(data?.body_type || "");
   const [fit, setFit] = useState<FitType | "">(data?.preferred_fit || "");
   const [styles, setStyles] = useState<StyleType[]>(data?.style_preferences || []);
@@ -41,11 +35,11 @@ export default function StepStyle({ onNext, next, back, data }: any) {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-display-3">Your Style</h1>
+      <h1 className="text-display-3">{t("step_style.title")}</h1>
 
       {/* Body Type */}
       <div>
-        <p className="text-sm font-medium mb-2">Body Type</p>
+        <p className="text-sm font-medium mb-2">{t("step_style.body_type")}</p>
         <div className="grid grid-cols-2 gap-3">
           {bodyTypes.map((b) => (
             <div
@@ -55,8 +49,8 @@ export default function StepStyle({ onNext, next, back, data }: any) {
                 body === b ? "bg-primary text-white" : "bg-card"
               }`}
             >
-              <p className="font-medium capitalize">{b}</p>
-              <p className="text-xs opacity-80">{bodyTypeInfo[b]}</p>
+              <p className="font-medium capitalize">{tValue("body_type_names", b)}</p>
+              <p className="text-xs opacity-80">{tValue("body_types", b)}</p>
             </div>
           ))}
         </div>
@@ -64,7 +58,7 @@ export default function StepStyle({ onNext, next, back, data }: any) {
 
       {/* Fit */}
       <div>
-        <p className="text-sm font-medium mb-2">Fit Preference</p>
+        <p className="text-sm font-medium mb-2">{t("step_style.fit_preference")}</p>
         <div className="flex gap-2 flex-wrap">
           {fits.map((f) => (
             <button
@@ -74,7 +68,7 @@ export default function StepStyle({ onNext, next, back, data }: any) {
                 fit === f ? "bg-primary text-white" : "bg-card"
               }`}
             >
-              {f}
+              {tValue("fits", f)}
             </button>
           ))}
         </div>
@@ -83,8 +77,8 @@ export default function StepStyle({ onNext, next, back, data }: any) {
       {/* Style Preferences */}
       <div>
         <div className="flex justify-between items-center mb-2">
-          <p className="text-sm font-medium">Style Preferences</p>
-          <p className="text-xs text-muted-foreground">{styles.length}/2 selected</p>
+          <p className="text-sm font-medium">{t("step_style.style_preferences")}</p>
+          <p className="text-xs text-muted-foreground">{t("step_style.selected_count", { count: styles.length })}</p>
         </div>
         <div className="flex gap-2 flex-wrap">
           {styleOptions.map((s) => (
@@ -95,16 +89,16 @@ export default function StepStyle({ onNext, next, back, data }: any) {
                 styles.includes(s) ? "bg-primary text-white" : "bg-card"
               }`}
             >
-              {s}
+              {tValue("style_preferences", s)}
             </button>
           ))}
         </div>
       </div>
 
       <div className="flex gap-2">
-        <button onClick={back}>Back</button>
+        <button onClick={back}>{t("step_style.back")}</button>
         <button onClick={handle} className="bg-primary text-white px-4 py-2 rounded">
-          Continue
+          {t("step_style.continue")}
         </button>
       </div>
     </div>

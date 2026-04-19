@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
 import { WardrobeItemDetail } from "@/components/WardrobeItemDetails";
 import { fetchWardrobeItems } from "@/lib/services/wardrobeService";
@@ -48,6 +49,7 @@ type DetectedColor = {
 
 export default function Wardrobe() {
   const { user } = useAuth();
+  const { t, tValue } = useLanguage();
 
   const [activeCategory, setActiveCategory] = useState<number>(0); // 0 = All
   const [items, setItems] = useState<WardrobeItem[]>([]);
@@ -429,13 +431,13 @@ export default function Wardrobe() {
 
   return (
     <AppShell>
-      <HeaderBar title="Wardrobe" right={<span className="text-body-sm text-muted-foreground">{items.length} items</span>} />
+      <HeaderBar title={t("wardrobe.wardrobe")} right={<span className="text-body-sm text-muted-foreground">{items.length} items</span>} />
 
       {/* Category Filters */}
       <div className="flex gap-2 overflow-x-auto px-4 pb-3 pt-1 scrollbar-none">
-        <TagChip key={0} label="All" active={activeCategory === 0} onClick={() => setActiveCategory(0)} />
+        <TagChip key={0} label={t("wardrobe.all")} active={activeCategory === 0} onClick={() => setActiveCategory(0)} />
         {parentCategories.map((c) => (
-          <TagChip key={c.id} label={c.name} active={activeCategory === c.id} onClick={() => setActiveCategory(c.id)} />
+          <TagChip key={c.id} label={tValue("categories", c.name)} active={activeCategory === c.id} onClick={() => setActiveCategory(c.id)} />
         ))}
       </div>
 
@@ -447,7 +449,7 @@ export default function Wardrobe() {
           </div>
         ) : filtered.length === 0 ? (
           <p className="col-span-2 py-12 text-center text-body-sm text-muted-foreground">
-            No items yet. Tap + to add your first piece.
+            {t("wardrobe.no_items")}
           </p>
         ) : (
           filtered.map((item) => (
@@ -463,7 +465,7 @@ export default function Wardrobe() {
               </div>
               <div className="p-3">
                 <p className="text-body-sm font-medium text-foreground">{item.name}</p>
-                <p className="text-caption text-muted-foreground">{item.category_name || ""}</p>
+                <p className="text-caption text-muted-foreground">{item.category_name ? tValue("categories", item.category_name) : ""}</p>
               </div>
             </div>
           ))
@@ -479,7 +481,7 @@ export default function Wardrobe() {
         </DialogTrigger>
         <DialogContent className="mx-4 max-w-sm rounded-2xl max-h-[80vh] p-0 flex flex-col">
           <DialogHeader className="px-6 pt-6">
-            <DialogTitle className="font-display text-display-3">Add Item</DialogTitle>
+            <DialogTitle className="font-display text-display-3">{t("wardrobe.add_item")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2 px-6 pb-6 overflow-y-auto" style={{ maxHeight: 'calc(80vh - 64px)' }}>
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
@@ -519,7 +521,7 @@ export default function Wardrobe() {
                       className="flex flex-col items-center justify-center gap-2 h-24 rounded-xl border-2 border-dashed border-border bg-muted/30 transition-colors hover:border-primary/30"
                     >
                       <Upload className="h-5 w-5 text-muted-foreground" />
-                      <span className="text-body-sm text-muted-foreground">Upload</span>
+                      <span className="text-body-sm text-muted-foreground">{t("wardrobe.upload")}</span>
                     </button>
 
                     <button
@@ -530,7 +532,7 @@ export default function Wardrobe() {
                         <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
                         <circle cx="12" cy="13" r="4"/>
                       </svg>
-                      <span className="text-body-sm text-muted-foreground">Camera</span>
+                      <span className="text-body-sm text-muted-foreground">{t("wardrobe.camera")}</span>
                     </button>
                   </>
                 )}
@@ -548,11 +550,11 @@ export default function Wardrobe() {
               </div>
             )}
             <div className="space-y-2">
-              <Label className="text-body-sm">Name</Label>
-              <Input placeholder="e.g. Blue Oxford Shirt" className="rounded-xl" value={name} onChange={(e) => setName(e.target.value)} />
+              <Label className="text-body-sm">{t("wardrobe.name")}</Label>
+              <Input placeholder={t("wardrobe.name_placeholder")} className="rounded-xl" value={name} onChange={(e) => setName(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label className="text-body-sm">Parent Category</Label>
+              <Label className="text-body-sm">{t("wardrobe.category")}</Label>
               <Select 
               value={parentCategoryId ? String(parentCategoryId) : ""} 
               onValueChange={(val) => {
@@ -567,31 +569,31 @@ export default function Wardrobe() {
                 setCategoryId(subs.length > 0 ? subs[0].id : null);
 
               }}>
-                <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select parent category" /></SelectTrigger>
+                <SelectTrigger className="rounded-xl"><SelectValue placeholder={t("wardrobe.select_category")} /></SelectTrigger>
                 <SelectContent>
                   {parentCategories.map((c) => (
-                    <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>
+                    <SelectItem key={c.id} value={String(c.id)}>{tValue("categories", c.name)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-body-sm">Subcategory</Label>
+              <Label className="text-body-sm">{t("wardrobe.subcategory")}</Label>
               <Select 
               value={categoryId ? String(categoryId) : ""}
                onValueChange={(val) => setCategoryId(Number(val))} 
                 disabled={!hasSubcategories}>
-                <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select subcategory" /></SelectTrigger>
+                <SelectTrigger className="rounded-xl"><SelectValue placeholder={t("wardrobe.select_category")} /></SelectTrigger>
                 <SelectContent>
                   {subCategories.filter((c) => c.parent_category_id === parentCategoryId).map((c) => (
-                    <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>
+                    <SelectItem key={c.id} value={String(c.id)}>{tValue("categories", c.name)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-                      {detectedPalette.length > 0 && (
+            {detectedPalette.length > 0 && (
             <div className="space-y-2">
-              <Label>Detected Colors</Label>
+              <Label>{t("wardrobe.detected_colors")}</Label>
 
               <div className="flex gap-2 flex-wrap">
                 {detectedPalette.map((c, i) => (
@@ -615,16 +617,16 @@ export default function Wardrobe() {
 
           <ColorPicker value={color} onChange={setColor} />
             <div className="space-y-2">
-              <Label className="text-body-sm">Fabric <span className="text-muted-foreground">(optional, recommended)</span></Label>
-              <Input placeholder="e.g. Cotton, Wool" className="rounded-xl" value={fabric} onChange={(e) => setFabric(e.target.value)} />
+              <Label className="text-body-sm">{t("wardrobe.fabric")} <span className="text-muted-foreground">{t("wardrobe.optional_recommended")}</span></Label>
+              <Input placeholder={t("wardrobe.fabric_placeholder")} className="rounded-xl" value={fabric} onChange={(e) => setFabric(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label className="text-body-sm">Size <span className="text-muted-foreground">(optional, recommended)</span></Label>
-              <Input placeholder="e.g. M, 32W 30L" className="rounded-xl" value={size} onChange={(e) => setSize(e.target.value)} />
+              <Label className="text-body-sm">{t("wardrobe.size")} <span className="text-muted-foreground">{t("wardrobe.optional_recommended")}</span></Label>
+              <Input placeholder={t("wardrobe.size_placeholder")} className="rounded-xl" value={size} onChange={(e) => setSize(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label className="text-body-sm">Brand <span className="text-muted-foreground">(optional, recommended)</span></Label>
-              <Input placeholder="e.g. Uniqlo, Nike" className="rounded-xl" value={brand} onChange={(e) => setBrand(e.target.value)} />
+              <Label className="text-body-sm">{t("wardrobe.brand")} <span className="text-muted-foreground">{t("wardrobe.optional_recommended")}</span></Label>
+              <Input placeholder={t("wardrobe.brand_placeholder")} className="rounded-xl" value={brand} onChange={(e) => setBrand(e.target.value)} />
             </div>
             <div>
               {/*
@@ -635,7 +637,7 @@ export default function Wardrobe() {
             </div>
             <Button onClick={handleAdd} disabled={saving} className="w-full rounded-xl py-5">
               {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              {saving ? "Adding..." : "Add to Wardrobe"}
+              {saving ? t("wardrobe.adding") : t("wardrobe.add_to_wardrobe")}
             </Button>
           </div>
         </DialogContent>

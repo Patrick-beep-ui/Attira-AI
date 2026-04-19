@@ -9,6 +9,7 @@ import type { GeneratedOutfit } from "@/services/ai-service";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useState } from "react";
 import { publishOutfit, unpublishOutfit, shareOutfit } from "@/services/outfit-service";
 
@@ -16,6 +17,7 @@ export default function OutfitResult() {
 
   const location = useLocation();
   const navigate = useNavigate();
+  const { t, tValue } = useLanguage();
   const { user } = useAuth();
   const outfit = location.state?.outfit as GeneratedOutfit | undefined;
   console.log("🎬 OUTFIT RESULT:", outfit);
@@ -31,9 +33,9 @@ export default function OutfitResult() {
   if (!outfit) {
     return (
       <AppShell>
-        <HeaderBar title="Result" showBack />
+        <HeaderBar title={t("outfit_result.result")} showBack />
         <div className="flex h-64 items-center justify-center px-4">
-          <p>No outfit to display.</p>
+          <p>{t("outfit_result.no_outfit_to_display")}</p>
         </div>
       </AppShell>
     );
@@ -42,7 +44,7 @@ export default function OutfitResult() {
   const handleSave = async () => {
 
     if (!user) {
-      toast.error("Please sign in to save looks.");
+      toast.error(t("outfit_result.please_sign_in"));
       return;
     }
 
@@ -109,13 +111,13 @@ export default function OutfitResult() {
 
       }
 
-      toast.success("Look saved!");
+      toast.success(t("outfit_result.look_saved"));
       navigate("/saved");
 
     } catch (err) {
 
       console.error(err);
-      toast.error("Failed to save look.");
+      toast.error(t("outfit_result.failed_to_save"));
 
     } finally {
 
@@ -140,7 +142,7 @@ export default function OutfitResult() {
         </div>
       ) : null}
       <HeaderBar
-        title="Your Look"
+        title={t("outfit_result.your_look")}
         showBack
         right={<AiBadge label={`${Math.round(outfit.confidence * 100)}% match`} />}
       />
@@ -176,11 +178,16 @@ export default function OutfitResult() {
           </div>
         )}
 
-        {weatherContext && (
-          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-            <span>Weather: {weatherContext}</span>
-          </div>
-        )}
+        {weatherContext && (() => {
+          const parts = weatherContext.split(" and ");
+          const temp = parts[0] || "";
+          const condition = parts[1] || "";
+          return (
+            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+              <span>{t("outfit_result.weather")} {temp}{condition && ` ${tValue("weather_conditions", condition)}`}</span>
+            </div>
+          );
+        })()}
 
         <div className="space-y-3">
           {outfit.items?.map((item, i) => (
@@ -213,7 +220,7 @@ export default function OutfitResult() {
               <div className="flex-1">
                 <p className="font-medium">{item.name}</p>
                 <p className="text-sm uppercase text-muted-foreground">
-                  {item.category}
+                  {item.category ? tValue("categories", item.category) : ""}
                 </p>
               </div>
 
@@ -224,7 +231,7 @@ export default function OutfitResult() {
 
         <div className="rounded-lg border bg-primary/5 p-4">
           <div className="mb-2">
-            <AiBadge label="Styling Notes" />
+            <AiBadge label={t("outfit_result.styling_notes")} />
           </div>
           <p>{outfit.stylingNotes}</p>
         </div>
@@ -237,7 +244,7 @@ export default function OutfitResult() {
             className="flex-1"
           >
             <Bookmark className="h-4 w-4" />
-            {saving ? "Saving..." : "Save Look"}
+            {saving ? t("outfit_result.saving") : t("outfit_result.save_look")}
           </Button>
 
           <Button
@@ -260,14 +267,14 @@ export default function OutfitResult() {
                   if (isPublic) {
                     await unpublishOutfit(user.id, currentOutfitId);
                     setIsPublic(false);
-                    toast.success("Outfit is now private");
+                    toast.success(t("outfit_result.outfit_is_private"));
                   } else {
                     await publishOutfit(user.id, currentOutfitId);
                     setIsPublic(true);
-                    toast.success("Outfit is now public!");
+                    toast.success(t("outfit_result.outfit_is_public"));
                   }
                 } catch (err) {
-                  toast.error("Failed to update visibility");
+                  toast.error(t("outfit_result.failed_to_update"));
                 } finally {
                   setPublishing(false);
                 }
@@ -278,12 +285,12 @@ export default function OutfitResult() {
               {isPublic ? (
                 <>
                   <Lock className="h-4 w-4" />
-                  {publishing ? "..." : "Make Private"}
+                  {publishing ? "..." : t("outfit_result.make_private")}
                 </>
               ) : (
                 <>
                   <Globe className="h-4 w-4" />
-                  {publishing ? "..." : "Publish"}
+                  {publishing ? "..." : t("outfit_result.publish")}
                 </>
               )}
             </Button>
