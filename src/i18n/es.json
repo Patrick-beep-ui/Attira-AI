@@ -161,6 +161,17 @@
     "subtitle": "Personalizaremos tu experiencia según tu cuerpo, estilo y ubicación.",
     "start": "Comenzar"
   },
+  "step_name": {
+    "title": "Tu Nombre",
+    "subtitle": "¿Cómo deberíamos llamarte?",
+    "first_name_placeholder": "Nombre",
+    "last_name_placeholder": "Apellido",
+    "username_placeholder": "Nombre de Usuario",
+    "username_taken": "Nombre de usuario ya está en uso",
+    "check_error": "Error al verificar usuario",
+    "checking": "Verificando...",
+    "continue": "Continuar"
+  },
   "step_physical": {
     "title": "Tus Medidas",
     "subtitle": "Esto nos ayuda a adaptar las proporciones de los outfits a tu cuerpo.",
