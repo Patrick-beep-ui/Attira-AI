@@ -93,7 +93,7 @@ export default function Wardrobe() {
 
   const fetchItems = async () => {
     if (!user) return;
-    const items = await fetchWardrobeItems();
+    const items = await fetchWardrobeItems(user.id);
 
     if (items) {
       setItems(items);
