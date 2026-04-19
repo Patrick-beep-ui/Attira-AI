@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.8.0](https://github.com/Patrick-beep-ui/Dressly/compare/v1.7.1...v1.8.0) (2026-04-19)
+
+
+### Features
+
+* Added Select Language Function ([4056d57](https://github.com/Patrick-beep-ui/Dressly/commit/4056d57818ed0a2246fce4cba96a473db467beb1))
+* Added Select Language Function ([20b3c48](https://github.com/Patrick-beep-ui/Dressly/commit/20b3c4879690bbaa66e1dc73e40186568ba1068c))
+
 ## [1.7.1](https://github.com/Patrick-beep-ui/Dressly/compare/v1.7.0...v1.7.1) (2026-04-19)
 
 
