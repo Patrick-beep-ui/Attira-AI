@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function StepPhysical({ data, onNext, next }: any) {
+  const { t } = useLanguage();
   const [height, setHeight] = useState(data.height_cm || "");
   const [weight, setWeight] = useState(data.weight_kg || "");
 
@@ -18,16 +20,16 @@ export default function StepPhysical({ data, onNext, next }: any) {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-display-3">Your Measurements</h1>
+      <h1 className="text-display-3">{t("step_physical.title")}</h1>
       <p className="text-muted-foreground text-sm">
-        This helps us tailor outfit proportions to your body.
+        {t("step_physical.subtitle")}
       </p>
 
       <input
         className="rounded-xl border border-border bg-card w-full py-3 px-3"
         value={height}
         onChange={(e) => setHeight(e.target.value)}
-        placeholder="Height (cm)"
+        placeholder={t("step_physical.height_placeholder")}
         type="number"
       />
 
@@ -35,12 +37,12 @@ export default function StepPhysical({ data, onNext, next }: any) {
         className="rounded-xl border border-border bg-card w-full py-3 px-3"
         value={weight}
         onChange={(e) => setWeight(e.target.value)}
-        placeholder="Weight (kg)"
+        placeholder={t("step_physical.weight_placeholder")}
         type="number"
       />
 
       <Button onClick={handle} className="w-full">
-        Continue
+        {t("step_physical.continue")}
       </Button>
     </div>
   );

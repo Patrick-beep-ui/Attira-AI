@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { updateUserProfile } from "@/services/profile-service";
 
 import StepIntro from "@/components/setup/StepIntro";
@@ -18,6 +19,7 @@ export default function ProfileSetup() {
   const [step, setStep] = useState(0);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useLanguage();
 
   const [state, setState] = useState<any>({
     physical: {},
@@ -38,7 +40,7 @@ export default function ProfileSetup() {
 
   const handleSubmit = async () => {
     if (!user) {
-      toast.error("You must be logged in");
+      toast.error(t("profile.toast_must_be_logged_in"));
       return;
     }
 
@@ -55,7 +57,7 @@ export default function ProfileSetup() {
 
     if (error) return toast.error(error.message);
 
-    toast.success("Profile completed");
+    toast.success(t("profile.toast_profile_completed"));
     navigate("/home");
   };
 

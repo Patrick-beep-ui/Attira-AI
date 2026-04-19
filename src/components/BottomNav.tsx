@@ -1,16 +1,18 @@
 import { cn } from "@/lib/utils";
 import { Home, ShirtIcon, Sparkles, Bookmark, User } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const tabs = [
-  { path: "/home", label: "Home", icon: Home },
-  { path: "/wardrobe", label: "Wardrobe", icon: ShirtIcon },
-  { path: "/generate", label: "Generate", icon: Sparkles },
-  { path: "/saved", label: "Saved", icon: Bookmark },
-  { path: "/settings", label: "Profile", icon: User },
+  { path: "/home", labelKey: "nav.home", icon: Home },
+  { path: "/wardrobe", labelKey: "nav.wardrobe", icon: ShirtIcon },
+  { path: "/generate", labelKey: "nav.generate", icon: Sparkles },
+  { path: "/saved", labelKey: "nav.saved", icon: Bookmark },
+  { path: "/settings", labelKey: "nav.profile", icon: User },
 ];
 
 export function BottomNav() {
+  const { t } = useLanguage();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -30,7 +32,7 @@ export function BottomNav() {
               )}
             >
               <Icon className={cn("h-5 w-5", active && "stroke-[2.5]")} />
-              <span className="text-caption">{tab.label}</span>
+              <span className="text-caption">{t(tab.labelKey)}</span>
             </button>
           );
         })}
