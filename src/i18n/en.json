@@ -362,7 +362,18 @@
       "shirt": "Shirt",
       "t-shirt": "T-Shirt",
       "jeans": "Jeans",
-      "shorts": "Shorts"
+      "shorts": "Shorts",
+      "watch": "Watch",
+      "belt": "Belt",
+      "bracelet": "Bracelet",
+      "tie": "Tie",
+      "glasses": "Glasses",
+      "sunglasses": "Sunglasses",
+      "other_accessories": "Other",
+      "blazer": "Blazer",
+      "coat": "Coat",
+      "sweater": "Sweater",
+      "other_outerwear": "Other"
     },
 "weather_conditions": {
       "clear": "Clear",
