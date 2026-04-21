@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // ✅ 1. HANDLE PREFLIGHT (CRITICAL)
+  // ✅ 1. HANDLE PREFLIGHT
   if (req.method === "OPTIONS") {
     return new Response(null, {
       status: 200,
@@ -16,36 +16,98 @@ serve(async (req) => {
   }
 
   try {
-    const { imageUrl } = await req.json();
+    let removeBgResponse: Response;
 
-    if (!imageUrl) {
-      throw new Error("Missing imageUrl");
+    const contentType = req.headers.get("content-type") || "";
+
+    console.log("📩 Incoming content-type:", contentType);
+
+    // =========================================================
+    // ✅ 2. HANDLE FILE UPLOAD (RECOMMENDED WAY)
+    // =========================================================
+    if (contentType.includes("multipart/form-data")) {
+      const formData = await req.formData();
+      const file = formData.get("file") as File;
+
+      if (!file) {
+        throw new Error("No file provided");
+      }
+
+      console.log("📦 File received:", {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+      });
+
+      const body = new FormData();
+      body.append("image_file", file);
+      body.append("size", "auto");
+
+      removeBgResponse = await fetch("https://api.remove.bg/v1.0/removebg", {
+        method: "POST",
+        headers: {
+          "X-Api-Key": Deno.env.get("REMOVE_BG_API_KEY")!,
+        },
+        body,
+      });
+
+    // =========================================================
+    // ⚠️ 3. HANDLE BASE64 (LEGACY SUPPORT)
+    // =========================================================
+    } else {
+      const { imageUrl } = await req.json();
+
+      if (!imageUrl) {
+        throw new Error("Missing imageUrl");
+      }
+
+      console.log("📦 Base64 received:", {
+        length: imageUrl.length,
+        startsWith: imageUrl.slice(0, 30),
+      });
+
+      if (!imageUrl.startsWith("data:image")) {
+        throw new Error("Invalid base64 format (must start with data:image)");
+      }
+
+      const parts = imageUrl.split(",");
+      if (parts.length < 2) {
+        throw new Error("Malformed base64 string");
+      }
+
+      const base64 = parts[1];
+
+      console.log("📦 Extracted base64 length:", base64.length);
+
+      removeBgResponse = await fetch("https://api.remove.bg/v1.0/removebg", {
+        method: "POST",
+        headers: {
+          "X-Api-Key": Deno.env.get("REMOVE_BG_API_KEY")!,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          image_file_b64: base64,
+          size: "auto",
+        }),
+      });
     }
 
-    // ✅ 2. CLEAN FETCH (NO CORS HEADERS HERE)
-    const response = await fetch("https://api.remove.bg/v1.0/removebg", {
-      method: "POST",
-      headers: {
-        "X-Api-Key": Deno.env.get("REMOVE_BG_API_KEY")!,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({
-        image_file_b64: imageUrl.split(",")[1], // Extract base64 part
-        size: "auto",
-      }),
-    });
-
-    console.log(imageUrl.startsWith("data:image"));
-
-    if (!response.ok) {
-      const err = await response.text();
-      console.error("remove.bg error:", err);
+    // =========================================================
+    // ❌ HANDLE REMOVE.BG ERRORS
+    // =========================================================
+    if (!removeBgResponse.ok) {
+      const err = await removeBgResponse.text();
+      console.error("❌ remove.bg error:", err);
       throw new Error("Background removal failed");
     }
 
-    const buffer = await response.arrayBuffer();
+    // =========================================================
+    // RETURN IMAGE
+    // =========================================================
+    const buffer = await removeBgResponse.arrayBuffer();
 
-    // ✅ 3. RETURN WITH CORS HEADERS
+    console.log("✅ Background removed successfully");
+
     return new Response(buffer, {
       headers: {
         ...corsHeaders,
@@ -54,7 +116,7 @@ serve(async (req) => {
     });
 
   } catch (e) {
-    console.error("process-image error:", e);
+    console.error("❌ process-image error:", e);
 
     return new Response(
       JSON.stringify({ error: (e as Error).message }),
