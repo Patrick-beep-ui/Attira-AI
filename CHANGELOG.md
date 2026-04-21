@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.9.0](https://github.com/Patrick-beep-ui/Dressly/compare/v1.8.0...v1.9.0) (2026-04-21)
+
+
+### Features
+
+* Include first name, last name, and username in setup ([52cd840](https://github.com/Patrick-beep-ui/Dressly/commit/52cd840964b2b68a8b61585c4741785a24908169))
+* Include first name, last name, and username in setup ([da2f681](https://github.com/Patrick-beep-ui/Dressly/commit/da2f681240473708f7e94bbf92464a4eb56a8e62))
+
 ## [1.8.0](https://github.com/Patrick-beep-ui/Dressly/compare/v1.7.1...v1.8.0) (2026-04-19)
 
 
