@@ -73,6 +73,7 @@ export default function Wardrobe() {
   const [size, setSize] = useState("");
   const [brand, setBrand] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [originalImageData, setOriginalImageData] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [processedImage, setProcessedImage] = useState<string | null>(null);
   const [imageProcessing, setImageProcessing] = useState(false);
@@ -214,6 +215,8 @@ export default function Wardrobe() {
       reader.onload = async (ev) => {
         const imageData = ev.target?.result as string;
 
+        setOriginalImageData(imageData);
+
         try {
           setImageProcessing(true);
           // 🔥 REMOVE BACKGROUND FIRST
@@ -248,6 +251,7 @@ export default function Wardrobe() {
     setSize("");
     setBrand("");
     setImageFile(null);
+    setOriginalImageData(null);
     setImagePreview(null);
     setProcessedImage(null);
     setCameraOpen(false);
@@ -262,6 +266,8 @@ export default function Wardrobe() {
 
       reader.onload = async (ev) => {
         const imageData = ev.target?.result as string;
+
+        setOriginalImageData(imageData);
 
         try {
           setImageProcessing(true);
@@ -336,7 +342,7 @@ export default function Wardrobe() {
         size: size || null,
         brand: brand || null,
         image_url,
-        processing_status: "pending", // ✅ NEW
+        processing_status: "pending", 
       })
       .select()
       .single();
@@ -346,6 +352,9 @@ export default function Wardrobe() {
       return toast.error(error?.message || "Insert failed");
     }
 
+    // ✅ Save reference BEFORE reset (resetForm clears originalImageData)
+    const imageDataForProcessing = originalImageData;
+
     // ✅ UI responds instantly
     toast.success("Item added!");
     resetForm();
@@ -354,8 +363,8 @@ export default function Wardrobe() {
     setSaving(false);
 
     // 🚀 3. PROCESS IMAGE ASYNC (NON-BLOCKING)
-    if (imagePreview) {
-      removeBackground(imagePreview)
+    if (imageDataForProcessing) {
+      removeBackground(imageDataForProcessing)
         .then(async (blob) => {
           const path = `${user.id}/${crypto.randomUUID()}.png`;
 
@@ -421,7 +430,7 @@ export default function Wardrobe() {
 
       // 👇 show result instantly
       setImagePreview(url);
-      //setProcessedImage(url);
+      setProcessedImage(url);
 
     } catch (err) {
       console.error(err);
@@ -502,6 +511,7 @@ export default function Wardrobe() {
                   onClick={() => {
                     setImagePreview(null);
                     setImageFile(null);
+                    setOriginalImageData(null);
                     setProcessedImage(null);
                   }}
                 >
