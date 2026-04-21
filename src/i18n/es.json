@@ -362,7 +362,18 @@
       "shirt": "Camisa",
       "t-shirt": "Camiseta",
       "jeans": "Jeans",
-      "shorts": "Shorts"
+      "shorts": "Shorts",
+      "watch": "Reloj",
+      "belt": "Cinturón",
+      "bracelet": "Pulsera",
+      "tie": "Corbata",
+      "glasses": "Lentes",
+      "sunglasses": "Lentes de Sol",
+      "other_accessories": "Otro",
+      "blazer": "Saco",
+      "coat": "Chaqueta",
+      "sweater": "Suéter",
+      "other_outerwear": "Otro"
     },
     "weather_conditions": {
       "clear": "Despejado",
