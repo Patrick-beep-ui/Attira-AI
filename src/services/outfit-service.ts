@@ -117,7 +117,7 @@ export async function getPublicOutfits(limit = 20, offset = 0) {
   const userIds = [...new Set(outfits.map(o => o.user_id))];
   const { data: profiles } = await supabase
     .from("profiles")
-    .select("user_id, username, first_name, last_name")
+    .select("user_id, username, first_name, last_name, profile_picture_url")
     .in("user_id", userIds);
 
   const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
