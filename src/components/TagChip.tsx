@@ -1,3 +1,4 @@
+import React from "react";
 import { cn } from "@/lib/utils";
 
 interface TagChipProps {
@@ -5,9 +6,10 @@ interface TagChipProps {
   active?: boolean;
   onClick?: () => void;
   className?: string;
+  style?: React.CSSProperties;
 }
 
-export function TagChip({ label, active, onClick, className }: TagChipProps) {
+export function TagChip({ label, active, onClick, className, style }: TagChipProps) {
   return (
     <button
       type="button"
@@ -19,6 +21,7 @@ export function TagChip({ label, active, onClick, className }: TagChipProps) {
           : "bg-muted text-muted-foreground hover:bg-muted/80",
         className
       )}
+      style={style}
     >
       {label}
     </button>

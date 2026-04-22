@@ -27,9 +27,27 @@ export interface GeneratedOutfit {
   weather?: WeatherInfo;
 }
 
-export async function generateOutfit(occasion: string, formality: string = "balanced"): Promise<GeneratedOutfit> {
+export interface GenerateOutfitParams {
+  occasion: string;
+  formality: string;
+  preferredColor?: string;
+  eventTitle?: string;
+  eventDescription?: string;
+}
+
+export async function generateOutfit(
+  occasion: string, 
+  formality: string = "balanced",
+  params?: { preferredColor?: string; eventTitle?: string; eventDescription?: string }
+): Promise<GeneratedOutfit> {
   const { data, error } = await supabase.functions.invoke("generate-outfit", {
-    body: { occasion, formality },
+    body: { 
+      occasion, 
+      formality,
+      preferred_color: params?.preferredColor,
+      event_title: params?.eventTitle,
+      event_description: params?.eventDescription,
+    },
   });
 
   if (error) {

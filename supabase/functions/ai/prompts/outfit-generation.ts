@@ -13,15 +13,11 @@ export function outfitGenerationPrompt(data: any) {
           .join("\n")
       : "No items in wardrobe yet.";
   
-    const profileContext = data.profile
+const profileContext = data.profile
       ? `User profile: body type: ${data.profile.body_type || "not set"}, preferred fit: ${
           data.profile.preferred_fit || "not set"
         }${data.profile.height_cm ? `, height: ${data.profile.height_cm}cm` : ""}${data.profile.weight_kg ? `, weight: ${data.profile.weight_kg}kg` : ""}.`
       : "No profile information available.";
-  
-    const stylePreferencesContext = data.stylePreferences?.length
-      ? `User's style preferences: ${data.stylePreferences.join(", ")}.`
-      : "";
   
     const weatherContext = data.weather?.context
       ? `Current weather: ${data.weather.context}. Consider: ${
@@ -32,7 +28,15 @@ export function outfitGenerationPrompt(data: any) {
             : "comfortable, versatile pieces"
         }${data.weather.condition?.includes("rain") ? "; prioritize rain-friendly or quick-dry items" : ""}.`
       : "";
-  
+   
+    const colorPreference = data.preferredColor
+      ? `Color preference: The user specifically wants to wear ${data.preferredColor} today. Prioritize items in this color or color family when selecting the outfit.`
+      : "";
+   
+    const eventContext = data.eventTitle
+      ? `Event context: ${data.eventTitle}${data.eventDescription ? ` - ${data.eventDescription}` : ""}. Consider this event when selecting the outfit.`
+      : "";
+   
     const historyContext = data.generationHistory?.length
       ? `User's recent outfit generation history (for learning preferences):
 ${data.generationHistory
@@ -86,16 +90,19 @@ Rules:
   - ONLY suggest items that exist in the user's wardrobe listed below.
   - If the wardrobe is empty or has too few items, suggest a minimal outfit and note what's missing.
   - Consider the occasion, formality level, season compatibility, weather appropriateness, and color coordination.
-  - Respect the user's style preferences if provided.
+  - Consider the user's color preference if provided.
+  - Consider the event context if provided.
   - Consider the user's history: if they consistently reject certain styles, avoid similar combinations.
   - Provide brief, confident styling notes (2-3 sentences max).
   - Rate your confidence from 0.0 to 1.0.
 
 ${profileContext}
 
-${stylePreferencesContext}
-
 ${weatherContext}
+
+${colorPreference}
+
+${eventContext}
 
 ${historyContext}
 ${preferenceHints()}

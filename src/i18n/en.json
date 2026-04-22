@@ -134,7 +134,16 @@
     "occasion_subtitle": "We'll style an outfit from your wardrobe.",
     "formality": "Formality Level",
     "generating": "AI is styling your perfect look...",
-    "select_occasion": "Select an occasion"
+    "select_occasion": "Select an occasion",
+    "color_preference": "Color Preference",
+    "color_preference_subtitle": "Want to wear a specific color?",
+    "no_color": "No preference",
+    "event_context": "Planning for an event?",
+    "event_title": "Event Name",
+    "event_title_placeholder": "e.g., Job interview, Birthday party",
+    "event_description": "Event Description",
+    "event_description_placeholder": "Add any details that could help...",
+    "add_details": "Add details"
   },
   "profile": {
     "profile": "Profile",
@@ -361,6 +370,7 @@
       "top": "Top",
       "shirt": "Shirt",
       "t-shirt": "T-Shirt",
+      "dress_shirt": "Formal Shirt",
       "jeans": "Jeans",
       "shorts": "Shorts",
       "watch": "Watch",
@@ -373,7 +383,11 @@
       "blazer": "Blazer",
       "coat": "Coat",
       "sweater": "Sweater",
-      "other_outerwear": "Other"
+      "other_outerwear": "Other",
+      "boots": "Boots",
+      "sandals": "Sandals",
+      "sneakers": "Sneakers",
+      "tennis": "Tennis"
     },
 "weather_conditions": {
       "clear": "Clear",
