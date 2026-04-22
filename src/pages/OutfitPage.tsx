@@ -31,6 +31,7 @@ interface ProfileData {
   username: string | null;
   first_name: string | null;
   last_name: string | null;
+  profile_picture_url: string | null;
   [key: string]: any;
 }
 
@@ -151,9 +152,17 @@ export default function OutfitPage() {
       <div className="space-y-6 px-4 pb-8 pt-14">
         {/* User Info */}
         <div className="flex items-center gap-3">
-          <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center">
-            <User className="h-6 w-6 text-primary" />
-          </div>
+          {creatorProfile?.profile_picture_url ? (
+            <img 
+              src={creatorProfile.profile_picture_url} 
+              alt="Profile" 
+              className="h-12 w-12 rounded-full object-cover"
+            />
+          ) : (
+            <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center">
+              <User className="h-6 w-6 text-primary" />
+            </div>
+          )}
           <div>
             <p className="text-body font-medium text-foreground">
               {creatorProfile?.username || creatorProfile?.first_name || "Anonymous"}

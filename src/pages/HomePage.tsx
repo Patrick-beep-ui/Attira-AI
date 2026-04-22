@@ -11,7 +11,7 @@ import { CommentDialog } from "@/components/CommentDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
-import { Sparkles, Heart } from "lucide-react";
+import { Sparkles, Heart, User } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import type { GeneratedOutfit } from "@/services/ai-service";
@@ -32,6 +32,7 @@ interface FeedOutfit {
     username: string | null;
     first_name: string | null;
     last_name: string | null;
+    profile_picture_url: string | null;
   } | null;
 }
 
@@ -251,11 +252,19 @@ function FeedCard({
     >
       {/* User Header */}
       <div className="flex items-center gap-3 p-4 border-b border-border">
-        <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
-          <span className="text-body-sm font-medium text-primary">
-            {outfit.profiles?.username?.slice(0, 2).toUpperCase() || "O"}
-          </span>
-        </div>
+        {outfit.profiles?.profile_picture_url ? (
+          <img 
+            src={outfit.profiles.profile_picture_url} 
+            alt="Profile" 
+            className="h-10 w-10 rounded-full object-cover"
+          />
+        ) : (
+          <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
+            <span className="text-body-sm font-medium text-primary">
+              {outfit.profiles?.username?.slice(0, 2).toUpperCase() || "O"}
+            </span>
+          </div>
+        )}
         <button
           onClick={(e) => {
             e.stopPropagation();

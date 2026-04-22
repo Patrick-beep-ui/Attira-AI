@@ -313,3 +313,31 @@ export async function checkUsernameAvailable(username: string): Promise<boolean>
   if (error) throw error;
   return !data || data.length === 0;
 }
+
+const MAX_PROFILE_PICTURE_SIZE = 5 * 1024 * 1024;
+const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+export async function uploadProfilePicture(userId: string, file: File): Promise<string> {
+  if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+    throw new Error("Only JPEG, PNG, and WebP images are allowed");
+  }
+  if (file.size > MAX_PROFILE_PICTURE_SIZE) {
+    throw new Error("Image must be smaller than 5MB");
+  }
+
+  const ext = file.name.split(".").pop() || "jpg";
+  const path = `profiles/${userId}/${crypto.randomUUID()}.${ext}`;
+
+  const { error } = await supabase.storage.from("images").upload(path, file);
+  if (error) throw error;
+
+  const { data } = supabase.storage.from("images").getPublicUrl(path);
+  return data.publicUrl;
+}
+
+export async function deleteProfilePicture(url: string): Promise<void> {
+  if (!url) return;
+  const path = url.split("/storage/v1/object/public/images/")[1];
+  if (!path) return;
+  await supabase.storage.from("images").remove([path]);
+}
