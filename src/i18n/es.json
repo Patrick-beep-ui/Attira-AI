@@ -134,7 +134,16 @@
     "occasion_subtitle": "Te estilizaremos un outfit de tu armario.",
     "formality": "Nivel de Formalidad",
     "generating": "La IA está estilizando tu look perfecto...",
-    "select_occasion": "Selecciona una ocasión"
+    "select_occasion": "Selecciona una ocasión",
+    "color_preference": "Preferencia de Color",
+    "color_preference_subtitle": "¿Quieres usar un color específico?",
+    "no_color": "Sin preferencia",
+    "event_context": "¿Planeando un evento?",
+    "event_title": "Nombre del Evento",
+    "event_title_placeholder": "ej., Entrevista de trabajo, Cena de cumpleaños",
+    "event_description": "Descripción del Evento",
+    "event_description_placeholder": "Agrega detalles que puedan ayudar...",
+    "add_details": "Agregar detalles"
   },
   "profile": {
     "profile": "Perfil",
@@ -361,6 +370,7 @@
       "top": "Parte Superior",
       "shirt": "Camisa",
       "t-shirt": "Camiseta",
+      "dress_shirt": "Camisa Formal",
       "jeans": "Jeans",
       "shorts": "Shorts",
       "watch": "Reloj",
@@ -373,7 +383,11 @@
       "blazer": "Saco",
       "coat": "Chaqueta",
       "sweater": "Suéter",
-      "other_outerwear": "Otro"
+      "other_outerwear": "Otro",
+      "boots": "Botas",
+      "sandals": "Sandalias",
+      "sneakers": "Zapatillas",
+      "tennis": "Tenis"
     },
     "weather_conditions": {
       "clear": "Despejado",

@@ -14,7 +14,9 @@ export class OutfitModule {
       occasion: data.occasion,
       formality: data.formality,
       generationHistory: data.generationHistory || [],
-      stylePreferences: data.stylePreferences || []
+      preferredColor: data.preferredColor,
+      eventTitle: data.eventTitle,
+      eventDescription: data.eventDescription,
     });
     return this.ai.run(prompt);
   }

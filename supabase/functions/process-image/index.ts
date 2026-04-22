@@ -46,7 +46,7 @@ serve(async (req) => {
       removeBgResponse = await fetch("https://api.remove.bg/v1.0/removebg", {
         method: "POST",
         headers: {
-          "X-Api-Key": Deno.env.get("REMOVE_BG_API_KEY")!,
+          "X-Api-Key": Deno.env.get("REMOVE_BG_API_KEY_2")!,
         },
         body,
       });
@@ -82,7 +82,7 @@ serve(async (req) => {
       removeBgResponse = await fetch("https://api.remove.bg/v1.0/removebg", {
         method: "POST",
         headers: {
-          "X-Api-Key": Deno.env.get("REMOVE_BG_API_KEY")!,
+          "X-Api-Key": Deno.env.get("REMOVE_BG_API_KEY_2")!,
           "Content-Type": "application/x-www-form-urlencoded",
         },
         body: new URLSearchParams({
