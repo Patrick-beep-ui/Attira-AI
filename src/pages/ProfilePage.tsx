@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { TagChip } from "@/components/TagChip";
-import { User, Loader2, Edit2, Image as ImageIcon } from "lucide-react";
+import { User, Loader2, Edit2, Image as ImageIcon, Camera, Upload, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { getProfileByUsername, getPublicOutfitsByUser, updateProfileBasic, PublicProfile, PublicOutfit } from "@/services/profile-service";
+import { getProfileByUsername, getPublicOutfitsByUser, updateProfileBasic, uploadProfilePicture, deleteProfilePicture, PublicProfile, PublicOutfit } from "@/services/profile-service";
 import { toast } from "sonner";
 
 export default function ProfilePage() {
@@ -28,6 +28,9 @@ export default function ProfilePage() {
     username: "",
     profile_picture_url: "",
   });
+  const [uploading, setUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadProfile();
@@ -85,16 +88,38 @@ export default function ProfilePage() {
     }
   };
 
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    setUploading(true);
+    try {
+      const url = await uploadProfilePicture(user.id, file);
+      setFormData({ ...formData, profile_picture_url: url });
+      setSelectedFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      toast.success("Profile picture updated!");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
     try {
+      const oldUrl = profile?.profile_picture_url;
       await updateProfileBasic(user.id, {
         first_name: formData.first_name || null,
         last_name: formData.last_name || null,
         username: formData.username || null,
         profile_picture_url: formData.profile_picture_url || null,
       });
+      if (oldUrl && formData.profile_picture_url !== oldUrl) {
+        deleteProfilePicture(oldUrl).catch(console.error);
+      }
       toast.success(t("common.success") + "!");
       setEditing(false);
       loadProfile();
@@ -175,13 +200,46 @@ export default function ProfilePage() {
                 onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                 className="w-full rounded-lg border border-border bg-card px-4 py-2 text-body text-foreground"
               />
-              <input
-                type="text"
-                placeholder={t("profile.profile_picture_url")}
-                value={formData.profile_picture_url}
-                onChange={(e) => setFormData({ ...formData, profile_picture_url: e.target.value })}
-                className="w-full rounded-lg border border-border bg-card px-4 py-2 text-body text-foreground"
-              />
+              <div className="space-y-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+                <div className="flex items-center gap-3">
+                  <div className="h-16 w-16 rounded-full bg-primary/10 overflow-hidden flex-shrink-0">
+                    {formData.profile_picture_url ? (
+                      <img src={formData.profile_picture_url} alt="Profile" className="h-full w-full object-cover" />
+                    ) : (
+                      <User className="h-full w-full p-3 text-primary" />
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading}
+                    >
+                      {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
+                      Upload
+                    </Button>
+                    {formData.profile_picture_url && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setFormData({ ...formData, profile_picture_url: "" })}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
               <div className="flex gap-2">
                 <Button 
                   variant="outline" 
