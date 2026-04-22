@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.10.0](https://github.com/Patrick-beep-ui/Dressly/compare/v1.9.0...v1.10.0) (2026-04-22)
+
+
+### Features
+
+* comments feature enabled ([e6df4ac](https://github.com/Patrick-beep-ui/Dressly/commit/e6df4acef5c87be786b7c2cd7219ddf3ec749b88))
+* comments feature enabled ([7936f80](https://github.com/Patrick-beep-ui/Dressly/commit/7936f8053c6f54eb79e8e1231cf9f707825be030))
+
 ## [1.9.0](https://github.com/Patrick-beep-ui/Dressly/compare/v1.8.0...v1.9.0) (2026-04-21)
 
 
