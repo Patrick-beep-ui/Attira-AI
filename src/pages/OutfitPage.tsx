@@ -6,8 +6,10 @@ import { AiBadge } from "@/components/AiBadge";
 import { TagChip } from "@/components/TagChip";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getOutfitById, getOutfitItems, shareOutfit } from "@/services/outfit-service";
+import { getOutfitById, getOutfitItems, shareOutfit, getCommentCount, toggleLike, getLikeCount, getUserLikes } from "@/services/outfit-service";
+import { CommentDialog } from "@/components/CommentDialog";
 import { getProfile } from "@/services/profile-service";
+import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { User, X, Heart, MessageCircle, Share2, Globe, Lock } from "lucide-react";
 import { toast } from "sonner";
@@ -51,6 +53,7 @@ function adjustSvg(svgString: string): string {
 export default function OutfitPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { t, tValue } = useLanguage();
   const [outfit, setOutfit] = useState<OutfitData | null>(null);
   const [creatorProfile, setCreatorProfile] = useState<ProfileData | null>(null);
@@ -58,6 +61,10 @@ export default function OutfitPage() {
   const [wardrobeItems, setWardrobeItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [isLiked, setIsLiked] = useState(false);
+  const [commentCount, setCommentCount] = useState(0);
+  const [liking, setLiking] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -85,11 +92,22 @@ export default function OutfitPage() {
         .map((item) => item.wardrobe_item) || [];
       setWardrobeItems(wardrobeItemsList);
 
+      const { count: lc } = await getLikeCount(id);
+      setLikeCount(lc || 0);
+
+      const { count: cc } = await getCommentCount(id);
+      setCommentCount(cc || 0);
+
+      if (user) {
+        const likes = await getUserLikes(user.id, [id]);
+        setIsLiked(likes.includes(id));
+      }
+
       setLoading(false);
     };
 
     fetchOutfit();
-  }, [id]);
+  }, [id, user]);
 
   if (loading) {
     return (
@@ -235,6 +253,35 @@ export default function OutfitPage() {
 
         {/* Actions */}
         <div className="flex gap-3">
+          <Button
+            variant="outline"
+            className={`flex-1 gap-2 ${isLiked ? 'text-red-500 border-red-200' : ''}`}
+            onClick={async () => {
+              if (!user || liking) return;
+              setLiking(true);
+              const wasLiked = isLiked;
+              setIsLiked(!wasLiked);
+              setLikeCount(wasLiked ? likeCount - 1 : likeCount + 1);
+              try {
+                await toggleLike(user.id, outfit.id);
+              } catch {
+                setIsLiked(wasLiked);
+                setLikeCount(likeCount);
+              }
+              setLiking(false);
+            }}
+          >
+            <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
+            {likeCount > 0 ? likeCount : t("home.like")}
+          </Button>
+          {outfit.is_public && (
+            <CommentDialog
+              outfitId={outfit.id}
+              outfitOwnerId={outfit.user_id}
+              commentCount={commentCount}
+              onCommentAdded={() => setCommentCount(c => c + 1)}
+            />
+          )}
           <Button
             variant="outline"
             className="flex-1 gap-2"

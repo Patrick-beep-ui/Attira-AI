@@ -50,6 +50,15 @@
     "comment": "Comentar",
     "user": "usuario"
   },
+  "comments": {
+    "title": "Comentarios",
+    "description": "Ver y añadir comentarios a este outfit",
+    "placeholder": "Añade un comentario...",
+    "add": "Publicar",
+    "delete": "Eliminar",
+    "empty": "No hay comentarios aún. ¡Sé el primero!",
+    "sign_in": "Inicia sesión para comentar"
+  },
   "settings": {
     "settings": "Configuración",
     "edit_profile": "Editar Perfil",

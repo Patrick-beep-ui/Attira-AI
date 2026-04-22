@@ -7,10 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getTodaysLook } from "@/services/ai-service";
 import { getPublicOutfits, toggleLike, getLikeCount, getUserLikes } from "@/services/outfit-service";
+import { CommentDialog } from "@/components/CommentDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
-import { Sparkles, Heart, MessageCircle } from "lucide-react";
+import { Sparkles, Heart } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import type { GeneratedOutfit } from "@/services/ai-service";
@@ -25,6 +26,8 @@ interface FeedOutfit {
   formality: string | null;
   styling_notes: string | null;
   published_at: string | null;
+  like_count?: number;
+  comment_count?: number;
   profiles?: {
     username: string | null;
     first_name: string | null;
@@ -42,6 +45,19 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [userLikes, setUserLikes] = useState<string[]>([]);
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
+  const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
+
+  const updateCommentCount = (outfitId: string, delta: number) => {
+    setCommentCounts(prev => ({
+      ...prev,
+      [outfitId]: (prev[outfitId] || 0) + delta
+    }));
+    setFeed(prev => prev.map(o => 
+      o.id === outfitId 
+        ? { ...o, comment_count: (o.comment_count || 0) + delta }
+        : o
+    ));
+  };
 
 useEffect(() => {
     const fetchFeed = async () => {
@@ -54,11 +70,14 @@ useEffect(() => {
         setFeed(outfits);
         
         const counts: Record<string, number> = {};
+        const commentCountsMap: Record<string, number> = {};
         for (const o of outfits) {
           const { count } = await getLikeCount(o.id);
           counts[o.id] = count;
+          commentCountsMap[o.id] = o.comment_count || 0;
         }
         setLikeCounts(counts);
+        setCommentCounts(commentCountsMap);
         
         if (user) {
           const ids = outfits.map((o) => o.id);
@@ -129,8 +148,11 @@ useEffect(() => {
                   outfit={outfit} 
                   isLiked={userLikes.includes(outfit.id)}
                   likeCount={likeCounts[outfit.id] || 0}
+                  commentCount={commentCounts[outfit.id] || 0}
+                  outfitOwnerId={outfit.user_id}
                   setUserLikes={setUserLikes}
                   setLikeCounts={setLikeCounts}
+                  onCommentChange={updateCommentCount}
                 />
               ))}
             </div>
@@ -156,14 +178,20 @@ function FeedCard({
   outfit, 
   isLiked: initialIsLiked, 
   likeCount: initialLikeCount,
+  commentCount: initialCommentCount,
+  outfitOwnerId,
   setUserLikes,
-  setLikeCounts
+  setLikeCounts,
+  onCommentChange
 }: { 
   outfit: FeedOutfit; 
   isLiked: boolean;
   likeCount: number;
+  commentCount: number;
+  outfitOwnerId: string;
   setUserLikes: React.Dispatch<React.SetStateAction<string[]>>;
   setLikeCounts: React.Dispatch<React.SetStateAction<Record<string, number>>>;
+  onCommentChange: (outfitId: string, delta: number) => void;
 }) {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -172,12 +200,14 @@ function FeedCard({
   
   const [isLiked, setIsLiked] = useState(initialIsLiked);
   const [likeCount, setLikeCount] = useState(initialLikeCount);
+  const [commentCount, setCommentCount] = useState(initialCommentCount);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     setIsLiked(initialIsLiked);
     setLikeCount(initialLikeCount);
-  }, [initialIsLiked, initialLikeCount]);
+    setCommentCount(initialCommentCount);
+  }, [initialIsLiked, initialLikeCount, initialCommentCount]);
   
   const handleLike = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -287,10 +317,12 @@ function FeedCard({
             <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
             <span>{likeCount > 0 ? likeCount : t("home.like")}</span>
           </button>
-          <button className="flex items-center gap-1.5 text-body-sm text-muted-foreground hover:text-foreground">
-            <MessageCircle className="h-4 w-4" />
-            <span>{t("home.comment")}</span>
-          </button>
+          <CommentDialog 
+            outfitId={outfit.id} 
+            outfitOwnerId={outfitOwnerId}
+            commentCount={commentCount}
+            onCommentAdded={() => onCommentChange(outfit.id, 1)}
+          />
         </div>
       </div>
     </motion.div>
