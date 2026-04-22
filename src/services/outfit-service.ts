@@ -107,7 +107,7 @@ export async function getUserOutfits(userId: string) {
 export async function getPublicOutfits(limit = 20, offset = 0) {
   const { data: outfits, error } = await supabase
     .from("outfits")
-    .select("*, outfit_likes(count)")
+    .select("*, outfit_likes(count), outfit_comments(count)")
     .eq("is_public", true)
     .order("published_at", { ascending: false })
     .range(offset, offset + limit - 1);
@@ -124,7 +124,9 @@ export async function getPublicOutfits(limit = 20, offset = 0) {
 
   const data = outfits.map(o => ({
     ...o,
-    profiles: profileMap.get(o.user_id) || null
+    profiles: profileMap.get(o.user_id) || null,
+    like_count: o.outfit_likes?.[0]?.count || 0,
+    comment_count: o.outfit_comments?.[0]?.count || 0
   }));
 
   return { data, error: null };
@@ -203,4 +205,74 @@ export async function getOutfitItems(outfitId: string) {
   }));
 
   return { data: itemsWithDetails, error: null };
+}
+
+export interface OutfitComment {
+  id: string;
+  user_id: string;
+  outfit_id: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+  profiles?: {
+    username: string;
+    first_name: string | null;
+    last_name: string | null;
+  } | null;
+}
+
+export async function addComment(userId: string, outfitId: string, content: string) {
+  const { data, error } = await supabase
+    .from("outfit_comments")
+    .insert({ user_id: userId, outfit_id: outfitId, content: content.trim() })
+    .select("*, profiles:profiles(username, first_name, last_name)")
+    .single();
+
+  return { data: data as OutfitComment | null, error };
+}
+
+export async function deleteComment(commentId: string, userId: string) {
+  const { error } = await supabase
+    .from("outfit_comments")
+    .delete()
+    .eq("id", commentId)
+    .eq("user_id", userId);
+
+  return { error };
+}
+
+export async function deleteCommentAsOwner(commentId: string, outfitOwnerId: string) {
+  const { data: comment, error: fetchError } = await supabase
+    .from("outfit_comments")
+    .select("outfit_id")
+    .eq("id", commentId)
+    .single();
+
+  if (fetchError || !comment) return { error: fetchError };
+
+  const { error } = await supabase
+    .from("outfit_comments")
+    .delete()
+    .eq("id", commentId);
+
+  return { error };
+}
+
+export async function getOutfitComments(outfitId: string) {
+  const { data, error } = await supabase
+    .from("outfit_comments")
+    .select("*, profiles:profiles(username, first_name, last_name)")
+    .eq("outfit_id", outfitId)
+    .order("created_at", { ascending: true });
+
+  return { data: data as OutfitComment[] | null, error };
+}
+
+export async function getCommentCount(outfitId: string) {
+  const { count, error } = await supabase
+    .from("outfit_comments")
+    .select("*", { count: "exact" })
+    .eq("outfit_id", outfitId);
+
+  return { count: count || 0, error };
 }
