@@ -23,7 +23,7 @@ export function buildOutfitLayout(items: OutfitItem[]) {
   const centerX = CANVAS_WIDTH / 2;
 
   const sizeMap: Record<string, { w: number; h: number }> = {
-    outerwear: { w: 260, h: 260 },
+    outerwear: { w: 350, h: 260 },
     tops: { w: 320, h: 320 },
     bottoms: { w: 300, h: 350 },
     shoes: { w: 230, h: 250 },
@@ -82,7 +82,7 @@ export function buildOutfitLayout(items: OutfitItem[]) {
       y: 20,
       w: size.w,
       h: size.h,
-      z: 40,
+      z: 60,
       rotation: getRotation()
     });
   }
@@ -96,8 +96,8 @@ export function buildOutfitLayout(items: OutfitItem[]) {
     layers.push({
       id: outerwear.id,
       imageUrl: outerwear.imageUrl,
-      x: baseX - size.w / 2 + rand(-10, 10),
-      y: 80,
+      x: 200,
+      y: 0,
       w: size.w,
       h: size.h,
       z: 40,
@@ -136,7 +136,7 @@ export function buildOutfitLayout(items: OutfitItem[]) {
       id: item.id,
       imageUrl: item.imageUrl,
       x: centerX + 20 + rand(-15, 15),
-      y: 80 + i * 150 + rand(-10, 10),
+      y: 120 + i * 150 + rand(-10, 10),
       w: size.w,
       h: size.h,
       z: 100 + i,

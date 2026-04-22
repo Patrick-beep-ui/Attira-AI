@@ -136,9 +136,9 @@ serve(async (req) => {
 
   try {
     /*
-      REQUEST
+      REQUEST - Now with color preference and event details
     */
-    const { occasion, formality } = await req.json();
+    const { occasion, formality, preferred_color, event_title, event_description } = await req.json();
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("Missing authorization header");
@@ -222,23 +222,7 @@ serve(async (req) => {
       FETCH STYLE PREFERENCES
     */
     const { data: profileData } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    let stylePreferences: string[] = [];
-    if (profileData?.id) {
-      const { data: prefs } = await supabase
-        .from("profile_style_preferences")
-        .select("style_categories(name)")
-        .eq("profile_id", profileData.id);
-      
-      stylePreferences = prefs?.map((p: any) => p.style_categories?.name).filter(Boolean) || [];
-      console.log("Style preferences:", stylePreferences);
-    }
-
-    /*
+      /*
       FETCH GENERATION HISTORY
     */
     const { data: generationHistory } = await supabase
@@ -263,7 +247,7 @@ serve(async (req) => {
     }
 
     /*
-      AI CALL
+      AI CALL - Now passing color preference and event details
     */
     const aiResponse = await outfitModule.generateOutfit({
       wardrobe: wardrobeMapped,
@@ -272,7 +256,9 @@ serve(async (req) => {
       formality,
       weather,
       generationHistory: generationHistory || [],
-      stylePreferences,
+      preferredColor: preferred_color,
+      eventTitle: event_title,
+      eventDescription: event_description,
     });
 
     let parsed;
