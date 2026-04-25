@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.11.0](https://github.com/Patrick-beep-ui/Dressly/compare/v1.10.0...v1.11.0) (2026-04-22)
+
+
+### Features
+
+* profile picture functionality ([6f4c69a](https://github.com/Patrick-beep-ui/Dressly/commit/6f4c69a2c2684e4f03880ef83c1f26d138d9a15e))
+* profile picture functionality ([cf0d377](https://github.com/Patrick-beep-ui/Dressly/commit/cf0d3777ceaea8b9c0467db9ef7959b136a80ca7))
+
 ## [1.10.0](https://github.com/Patrick-beep-ui/Dressly/compare/v1.9.0...v1.10.0) (2026-04-22)
 
 
