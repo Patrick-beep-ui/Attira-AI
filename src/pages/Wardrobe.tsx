@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { AppShell } from "@/components/AppShell";
 import { HeaderBar } from "@/components/HeaderBar";
 import { TagChip } from "@/components/TagChip";
-import { Plus, Camera, Loader2, Upload } from "lucide-react";
+import { Plus, Camera, Loader2, Upload, CheckCircle, Circle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,6 +40,7 @@ interface WardrobeItem {
   processed_image_url?: string | null; 
   processing_status?: string | null; 
   category_name?: string;
+  is_available?: boolean;
 }
 
 type DetectedColor = {
@@ -52,6 +53,7 @@ export default function Wardrobe() {
   const { t, tValue } = useLanguage();
 
   const [activeCategory, setActiveCategory] = useState<number>(0); // 0 = All
+  const [availabilityFilter, setAvailabilityFilter] = useState<"all" | "available" | "unavailable">("all");
   const [items, setItems] = useState<WardrobeItem[]>([]);
   const [addOpen, setAddOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -404,19 +406,24 @@ export default function Wardrobe() {
   };
 
   // Filtering: if a parent category is selected, show all items whose category is a subcategory of that parent
-  const filtered = activeCategory === 0
-    ? items
-    : items.filter((i) => {
-        // Subcategories of the selected parent
-        const subIds = subCategories
-          .filter((c) => c.parent_category_id === activeCategory)
-          .map((c) => c.id);
+  const filtered = items
+    .filter((i) => {
+      if (availabilityFilter === "available") return i.is_available !== false;
+      if (availabilityFilter === "unavailable") return i.is_available === false;
+      return true;
+    })
+    .filter((i) => {
+      if (activeCategory === 0) return true;
+      // Subcategories of the selected parent
+      const subIds = subCategories
+        .filter((c) => c.parent_category_id === activeCategory)
+        .map((c) => c.id);
 
-        return (
-          subIds.includes(i.category_id!) || // subcategory match
-          i.category_id === activeCategory   // parent match (legacy or no-subcategory)
-        );
-      });
+      return (
+        subIds.includes(i.category_id!) || // subcategory match
+        i.category_id === activeCategory   // parent match (legacy or no-subcategory)
+      );
+    });
 
       const testRemoveBg = async () => {
     if (!imagePreview) return;
@@ -438,9 +445,45 @@ export default function Wardrobe() {
     }
   };
 
+  const toggleAvailability = async (item: WardrobeItem, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newValue = item.is_available === false ? true : false;
+    
+    const { error } = await supabase
+      .from("wardrobe_items")
+      .update({ is_available: newValue })
+      .eq("id", item.id);
+
+    if (error) {
+      toast.error("Failed to update availability");
+      return;
+    }
+
+    setItems(items.map(i => i.id === item.id ? { ...i, is_available: newValue } : i));
+  };
+
   return (
     <AppShell>
       <HeaderBar title={t("wardrobe.wardrobe")} right={<span className="text-body-sm text-muted-foreground">{items.length} items</span>} />
+
+      {/* Availability Filters */}
+      <div className="flex gap-2 px-4 pt-2">
+        <TagChip 
+          label={t("wardrobe.all")} 
+          active={availabilityFilter === "all"} 
+          onClick={() => setAvailabilityFilter("all")} 
+        />
+        <TagChip 
+          label={t("wardrobe.available")} 
+          active={availabilityFilter === "available"} 
+          onClick={() => setAvailabilityFilter("available")} 
+        />
+        <TagChip 
+          label={t("wardrobe.unavailable")} 
+          active={availabilityFilter === "unavailable"} 
+          onClick={() => setAvailabilityFilter("unavailable")} 
+        />
+      </div>
 
       {/* Category Filters */}
       <div className="flex gap-2 overflow-x-auto px-4 pb-3 pt-1 scrollbar-none">
@@ -464,13 +507,20 @@ export default function Wardrobe() {
           filtered.map((item) => (
             <div key={item.id} 
             onClick={() => { setDetailItem(item); setDetailOpen(true); }}
-            className="animate-fade-slide-up overflow-hidden rounded-lg border border-border bg-card shadow-sm">
-              <div className="flex h-32 items-center justify-center bg-muted/50 overflow-hidden">
+            className={`animate-fade-slide-up overflow-hidden rounded-lg border border-border bg-card shadow-sm ${item.is_available === false ? 'opacity-60' : ''}`}>
+              <div className="flex h-32 items-center justify-center bg-muted/50 overflow-hidden relative">
                 {item.image_url ? (
                   <img src={item.image_url} alt={item.name} className="h-full w-full object-cover" />
                 ) : (
                   <div className="h-16 w-16 rounded-full border border-border shadow-sm" style={{ backgroundColor: item.color || "#ccc" }} />
                 )}
+                <button
+                  onClick={(e) => toggleAvailability(item, e)}
+                  className="absolute top-2 right-2 p-1.5 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors"
+                  title={item.is_available === false ? "Mark as available" : "Mark as unavailable"}
+                >
+                  {item.is_available === false ? <Circle className="h-4 w-4" /> : <CheckCircle className="h-4 w-4" />}
+                </button>
               </div>
               <div className="p-3">
                 <p className="text-body-sm font-medium text-foreground">{item.name}</p>

@@ -179,7 +179,8 @@ serve(async (req) => {
         size,
         clothing_categories(name, parent_category_id, parent:parent_category_id(name))
       `)
-      .eq("user_id", user.id);
+      .eq("user_id", user.id)
+      .eq("is_available", true);
 
     if (wardrobeError) {
       console.error("Wardrobe fetch failed:", wardrobeError);

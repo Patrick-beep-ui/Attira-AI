@@ -95,6 +95,8 @@
 "wardrobe": {
     "wardrobe": "Armario",
     "all": "Todo",
+    "available": "Disponible",
+    "unavailable": "No Disponible",
     "add_item": "Agregar Prenda",
     "name": "Nombre",
     "name_placeholder": "ej. Camisa Oxford Azul",

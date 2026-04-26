@@ -12,7 +12,7 @@ export class GeminiClient implements AIClientInterface {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-goog-api-key": Deno.env.get("PERSONAL_GEMINI_KEY")!
+          "x-goog-api-key": Deno.env.get("GEMINI_API_KEY_PAGO")!
         },
         body: JSON.stringify({
           contents: [

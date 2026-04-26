@@ -89,6 +89,7 @@ export type Database = {
           brand: string | null
           image_url: string | null
           created_at: string
+          is_available: boolean | null
         }
         Insert: {
           id?: string
@@ -103,6 +104,7 @@ export type Database = {
           processed_image_url?: string | null
           processing_status?: string | null
           created_at?: string
+          is_available?: boolean | null
         }
         Update: {
           id?: string
@@ -117,6 +119,7 @@ export type Database = {
           processed_image_url?: string | null
           processing_status?: string | null
           created_at?: string
+          is_available?: boolean | null
         }
         Relationships: []
       }
