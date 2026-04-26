@@ -95,6 +95,8 @@
 "wardrobe": {
     "wardrobe": "Wardrobe",
     "all": "All",
+    "available": "Available",
+    "unavailable": "Unavailable",
     "add_item": "Add Item",
     "name": "Name",
     "name_placeholder": "e.g. Blue Oxford Shirt",

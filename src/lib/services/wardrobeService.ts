@@ -12,7 +12,8 @@ export async function fetchWardrobeItems(userId: string) {
       brand,
       image_url,
       category_id,
-      clothing_categories(name)
+      clothing_categories(name),
+      is_available
     `)
     .eq("user_id", userId);
 
