@@ -1,9 +1,11 @@
+import { useState, useEffect } from "react";
 import { AppShell } from "@/components/AppShell";
 import { HeaderBar } from "@/components/HeaderBar";
 import { Button } from "@/components/ui/button";
 import { Check, Crown } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { getSubscription, SubscriptionStatus } from "@/services/subscription-service";
 
 const freeFeaturesKeys = [
   "subscription_features.up_to_20_items",
@@ -21,6 +23,14 @@ const premiumFeaturesKeys = [
 
 export default function Subscription() {
   const { t } = useLanguage();
+  const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
+
+  useEffect(() => {
+    getSubscription().then(setSubscription);
+  }, []);
+
+  const isPremium = subscription?.plan === "premium" && subscription?.status === "active";
+  const isTrialing = subscription?.status === "trialing";
 
   return (
     <AppShell>
@@ -33,6 +43,15 @@ export default function Subscription() {
           </div>
           <h1 className="font-display text-display-1 text-foreground">{t("subscription_page.attira_premium")}</h1>
           <p className="mt-2 text-body text-muted-foreground">{t("subscription_page.unlock_full_power")}</p>
+          {isPremium && (
+            <p className="mt-2 text-body-sm text-primary font-medium">{t("settings.subscription")}: Active</p>
+          )}
+          {isTrialing && (
+            <p className="mt-2 text-body-sm text-primary font-medium">{t("settings.subscription")}: Trial ({subscription.trialDaysRemaining} days left)</p>
+          )}
+          {!isPremium && !isTrialing && (
+            <p className="mt-2 text-body-sm text-muted-foreground">{t("settings.subscription")}: {t("settings.free_plan")}</p>
+          )}
         </motion.div>
 
         {/* Premium Card */}

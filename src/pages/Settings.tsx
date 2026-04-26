@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { AppShell } from "@/components/AppShell";
 import { HeaderBar } from "@/components/HeaderBar";
 import { useAuth } from "@/contexts/AuthContext";
@@ -5,6 +6,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
 import { ChevronRight, User, Ruler, Bell, Crown, HelpCircle, LogOut, Globe } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { getSubscription, SubscriptionStatus } from "@/services/subscription-service";
 
 const menuItems = [
   { labelKey: "settings.edit_profile", icon: User, path: "/body-profile" },
@@ -18,6 +20,17 @@ export default function Settings() {
   const { user, signOut } = useAuth();
   const { t, language, setLanguage } = useLanguage();
   const navigate = useNavigate();
+  const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
+
+  useEffect(() => {
+    getSubscription().then(setSubscription);
+  }, []);
+
+  const getPlanLabel = () => {
+    if (!subscription || subscription.plan === "free") return t("settings.free_plan");
+    if (subscription.status === "trialing") return `${t("subscription_page.attira_premium")} (Trial)`;
+    return t("subscription_page.attira_premium");
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -39,7 +52,7 @@ export default function Settings() {
           </div>
           <div className="flex-1">
             <p className="text-body font-medium text-foreground">{user?.email || t("settings.guest")}</p>
-            <p className="text-caption text-muted-foreground">{t("settings.free_plan")}</p>
+            <p className="text-caption text-muted-foreground">{getPlanLabel()}</p>
           </div>
           <ChevronRight className="h-4 w-4 text-muted-foreground" />
         </button>
