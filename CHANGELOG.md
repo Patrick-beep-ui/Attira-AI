@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.12.0](https://github.com/Patrick-beep-ui/Dressly/compare/v1.11.0...v1.12.0) (2026-04-26)
+
+
+### Features
+
+* wardrobe item availability functionality ([f70652d](https://github.com/Patrick-beep-ui/Dressly/commit/f70652df60b765e17190617375c225b82e02b88d))
+* wardrobe item availability functionality ([47fb3d2](https://github.com/Patrick-beep-ui/Dressly/commit/47fb3d28d5c485b6a5acc5837ac4881df3f185e1))
+
 ## [1.11.0](https://github.com/Patrick-beep-ui/Dressly/compare/v1.10.0...v1.11.0) (2026-04-22)
 
 
