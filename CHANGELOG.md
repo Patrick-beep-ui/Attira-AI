@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.13.0](https://github.com/Patrick-beep-ui/Dressly/compare/v1.12.0...v1.13.0) (2026-04-26)
+
+
+### Features
+
+* subscription management ([a183ff7](https://github.com/Patrick-beep-ui/Dressly/commit/a183ff729ab3012fbb5ee9fd59cfe46ea05eeeb5))
+* subscription management ([ce032c7](https://github.com/Patrick-beep-ui/Dressly/commit/ce032c7e42609b3491e1a574fe77936d31f98bf1))
+
 ## [1.12.0](https://github.com/Patrick-beep-ui/Dressly/compare/v1.11.0...v1.12.0) (2026-04-26)
 
 
