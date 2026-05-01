@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/AppShell";
 import { HeaderBar } from "@/components/HeaderBar";
 import { TagChip } from "@/components/TagChip";
@@ -54,9 +55,7 @@ export default function Wardrobe() {
 
   const [activeCategory, setActiveCategory] = useState<number>(0); // 0 = All
   const [availabilityFilter, setAvailabilityFilter] = useState<"all" | "available" | "unavailable">("all");
-  const [items, setItems] = useState<WardrobeItem[]>([]);
   const [addOpen, setAddOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [detailItem, setDetailItem] = useState<WardrobeItem | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -90,19 +89,21 @@ export default function Wardrobe() {
   const [colorDetectAttempted, setColorDetectAttempted] = useState(false);
   const [detectedPalette, setDetectedPalette] = useState<DetectedColor[]>([]);
 
-    const hasSubcategories = parentCategoryId
+    const queryClient = useQueryClient();
+
+  const hasSubcategories = parentCategoryId
     ? subCategories.some((c) => c.parent_category_id === parentCategoryId)
     : false;
 
-  const fetchItems = async () => {
-    if (!user) return;
-    const items = await fetchWardrobeItems(user.id);
+  // Wardrobe items query - cached for 10 minutes
+  const { data: itemsData, isLoading, dataUpdatedAt } = useQuery({
+    queryKey: ["wardrobe", user?.id],
+    queryFn: () => fetchWardrobeItems(user!.id),
+    enabled: !!user,
+    staleTime: 1000 * 60 * 10, // 10 minutes
+  });
 
-    if (items) {
-      setItems(items);
-    }
-    setLoading(false);
-  };
+  const items = itemsData || [];
 
 
   // Fetch categories from DB
@@ -118,10 +119,6 @@ export default function Wardrobe() {
     };
     fetchCategories();
   }, []);
-
-  useEffect(() => {
-    fetchItems();
-  }, [user]);
 
     // 🎯 PALETTE EXTRACTION
     const extractPalette = (img: HTMLImageElement) => {
@@ -361,7 +358,7 @@ export default function Wardrobe() {
     toast.success("Item added!");
     resetForm();
     setAddOpen(false);
-    fetchItems();
+    queryClient.invalidateQueries({ queryKey: ["wardrobe", user.id] });
     setSaving(false);
 
     // 🚀 3. PROCESS IMAGE ASYNC (NON-BLOCKING)
@@ -495,7 +492,7 @@ export default function Wardrobe() {
 
       {/* Grid */}
       <div className="grid grid-cols-2 gap-3 px-4 pb-24 pt-3">
-        {loading ? (
+        {isLoading ? (
           <div className="col-span-2 flex justify-center py-12">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
@@ -706,7 +703,7 @@ export default function Wardrobe() {
         item={detailItem}
         open={detailOpen}
         onOpenChange={setDetailOpen}
-        onUpdated={fetchItems}
+        onUpdated={() => user && queryClient.invalidateQueries({ queryKey: ["wardrobe", user.id] })}
       />
     </AppShell>
   );

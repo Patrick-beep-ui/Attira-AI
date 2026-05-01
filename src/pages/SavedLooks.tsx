@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/AppShell";
 import { HeaderBar } from "@/components/HeaderBar";
 import { OutfitCard } from "@/components/OutfitCard";
@@ -5,7 +7,6 @@ import { TagChip } from "@/components/TagChip";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { AiBadge } from "@/components/AiBadge";
@@ -44,18 +45,18 @@ export default function SavedLooks() {
   const { user } = useAuth();
   const { t, tValue } = useLanguage();
   const [filter, setFilter] = useState("All");
-  const [looks, setLooks] = useState<SavedLook[]>([]);
-  const [loading, setLoading] = useState(true);
   const [selectedLook, setSelectedLook] = useState<SavedLook | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [publishing, setPublishing] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
 
-  useEffect(() => {
-    if (!user) return;
-    const fetchLooks = async () => {
-      setLoading(true);
+  // Fetch saved looks query - cached for 10 minutes
+  const { data: looksData, isLoading } = useQuery({
+    queryKey: ["saved-looks", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+
       // 1) Fetch outfits from the new schema
       const { data: outfits, error: outfitsError } = await supabase
         .from("outfits")
@@ -65,8 +66,7 @@ export default function SavedLooks() {
 
       if (outfitsError) {
         console.error("Failed to fetch outfits:", outfitsError);
-        setLoading(false);
-        return;
+        return [];
       }
 
       // 2) For each outfit, fetch its items from outfit_items joined to wardrobe_items
@@ -92,29 +92,31 @@ export default function SavedLooks() {
               imageUrl: w.image_url ?? null
             };
           });
-return { id: o.id, occasion: o.occasion, formality: o.formality ?? "balanced", stylingNotes: o.styling_notes ?? "", confidence: o.confidence ?? 0, createdAt: o.created_at, composition_url: o.composition_url, items, is_public: o.is_public ?? false };
+          return { id: o.id, occasion: o.occasion, formality: o.formality ?? "balanced", stylingNotes: o.styling_notes ?? "", confidence: o.confidence ?? 0, createdAt: o.created_at, composition_url: o.composition_url, items, is_public: o.is_public ?? false };
         })
       );
 
       // 3) Normalize to SavedLook shape
-      setLooks(
-        outfitsWithItems.map((o: any) => ({
-          id: o.id,
-          occasion: o.occasion,
-          formality: o.formality,
-          items: o.items,
-          stylingNotes: o.stylingNotes,
-          confidence: o.confidence,
-          createdAt: o.createdAt,
-          compositionUrl: o.composition_url,
-          composition_url: o.composition_url,
-          is_public: o.is_public,
-        }))
-      );
-      setLoading(false);
-    };
-    fetchLooks();
-  }, [user]);
+      return outfitsWithItems.map((o: any) => ({
+        id: o.id,
+        occasion: o.occasion,
+        formality: o.formality,
+        items: o.items,
+        stylingNotes: o.stylingNotes,
+        confidence: o.confidence,
+        createdAt: o.createdAt,
+        compositionUrl: o.composition_url,
+        composition_url: o.composition_url,
+        is_public: o.is_public,
+      }));
+    },
+    enabled: !!user,
+    staleTime: 1000 * 60 * 10, // 10 minutes
+  });
+
+  const looks = looksData || [];
+
+  const queryClient = useQueryClient();
 
   const filtered =
     filter === "All"
@@ -129,7 +131,7 @@ const handleDelete = async () => {
     if (error) {
       toast.error("Failed to delete look.");
     } else {
-      setLooks((prev) => prev.filter((l) => l.id !== deleteTarget));
+      queryClient.invalidateQueries({ queryKey: ["saved-looks", user?.id] });
       if (selectedLook?.id === deleteTarget) setSelectedLook(null);
       toast.success("Look deleted.");
     }
@@ -148,9 +150,7 @@ const handleDelete = async () => {
         await unpublishOutfit(user.id, lookId);
         toast.success("Outfit is now private");
       }
-      setLooks((prev) =>
-        prev.map((l) => (l.id === lookId ? { ...l, is_public: makePublic } : l))
-      );
+      queryClient.invalidateQueries({ queryKey: ["saved-looks", user?.id] });
       if (selectedLook?.id === lookId) {
         setSelectedLook((prev) => (prev ? { ...prev, is_public: makePublic } : null));
       }
@@ -180,7 +180,7 @@ const handleDelete = async () => {
         ))}
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <div className="grid grid-cols-2 gap-4 px-4 pt-3">
           {[1, 2, 3, 4].map((i) => (
             <Skeleton key={i} className="h-64 rounded-lg" />

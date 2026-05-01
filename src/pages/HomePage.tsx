@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/AppShell";
 import { HeaderBar } from "@/components/HeaderBar";
 import { AiBadge } from "@/components/AiBadge";
@@ -42,8 +43,6 @@ export default function HomePage() {
   const navigate = useNavigate();
   const todaysLook = getTodaysLook();
 
-  const [feed, setFeed] = useState<FeedOutfit[]>([]);
-  const [loading, setLoading] = useState(true);
   const [userLikes, setUserLikes] = useState<string[]>([]);
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
@@ -53,43 +52,50 @@ export default function HomePage() {
       ...prev,
       [outfitId]: (prev[outfitId] || 0) + delta
     }));
-    setFeed(prev => prev.map(o => 
-      o.id === outfitId 
-        ? { ...o, comment_count: (o.comment_count || 0) + delta }
-        : o
-    ));
   };
 
-useEffect(() => {
-    const fetchFeed = async () => {
-      setLoading(true);
-      const { data, error } = await getPublicOutfits(20);
-      if (error) {
-        console.error("Failed to fetch feed:", error);
-      } else {
-        const outfits = data as unknown as FeedOutfit[];
-        setFeed(outfits);
-        
-        const counts: Record<string, number> = {};
-        const commentCountsMap: Record<string, number> = {};
-        for (const o of outfits) {
-          const { count } = await getLikeCount(o.id);
-          counts[o.id] = count;
-          commentCountsMap[o.id] = o.comment_count || 0;
-        }
-        setLikeCounts(counts);
-        setCommentCounts(commentCountsMap);
-        
-        if (user) {
-          const ids = outfits.map((o) => o.id);
-          const liked = await getUserLikes(user.id, ids);
-          setUserLikes(liked);
-        }
+const queryClient = useQueryClient();
+
+  // Feed query - cached for 5 minutes
+  const { data: feedResult, isLoading } = useQuery({
+    queryKey: ["feed"],
+    queryFn: () => getPublicOutfits(20),
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+
+  const feed = (feedResult?.data as unknown as FeedOutfit[]) || [];
+
+  // Fetch like counts for all outfits
+  useEffect(() => {
+    if (!feed.length) return;
+    
+    const fetchCounts = async () => {
+      const counts: Record<string, number> = {};
+      const commentCountsMap: Record<string, number> = {};
+      for (const o of feed) {
+        const { count } = await getLikeCount(o.id);
+        counts[o.id] = count;
+        commentCountsMap[o.id] = o.comment_count || 0;
       }
-      setLoading(false);
+      setLikeCounts(counts);
+      setCommentCounts(commentCountsMap);
     };
-    fetchFeed();
-  }, [user]);
+    
+    fetchCounts();
+  }, [feed]);
+
+  // Fetch user's likes
+  useEffect(() => {
+    if (!user || !feed.length) return;
+    
+    const fetchUserLikes = async () => {
+      const ids = feed.map((o) => o.id);
+      const liked = await getUserLikes(user.id, ids);
+      setUserLikes(liked);
+    };
+    
+    fetchUserLikes();
+  }, [user, feed.length]);
 
   const greeting = () => {
     const h = new Date().getHours();
@@ -128,7 +134,7 @@ useEffect(() => {
             <h2 className="font-display text-display-3 text-foreground">{t("home.community_looks")}</h2>
           </div>
 
-          {loading ? (
+          {isLoading ? (
             <div className="space-y-4">
               {[1, 2, 3].map((i) => (
                 <Skeleton key={i} className="h-72 rounded-lg" />

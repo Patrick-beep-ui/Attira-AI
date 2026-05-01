@@ -1,7 +1,10 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+
+import { queryCacheConfig, persister } from "./lib/queryCache";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -24,10 +27,15 @@ import OutfitPage from "./pages/OutfitPage";
 import ProfilePage from "./pages/ProfilePage";
 
 import ProtectedRoute from "./components/ProtectedRoutes";
+import { OfflineIndicator } from "./components/OfflineIndicator";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfileCheck } from "./hooks/useProfileCheck";
 
-const queryClient = new QueryClient();
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: queryCacheConfig,
+  },
+});
 
 function RequireAuthOnly({ children }: { children: JSX.Element }) {
   const { user, loading } = useAuth();
@@ -43,10 +51,15 @@ function RequireAuthOnly({ children }: { children: JSX.Element }) {
 }
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
+  <PersistQueryClientProvider
+    client={queryClient}
+    persistOptions={{ persister }}
+    onSuccess={() => queryClient.resumePausedMutations()}
+  >
     <AuthProvider>
       <LanguageProvider>
         <TooltipProvider>
+        <OfflineIndicator />
         <Toaster />
         <Sonner />
         <BrowserRouter>
@@ -165,7 +178,7 @@ const App = () => (
       </TooltipProvider>
       </LanguageProvider>
     </AuthProvider>
-  </QueryClientProvider>
+  </PersistQueryClientProvider>
 );
 
 export default App;
