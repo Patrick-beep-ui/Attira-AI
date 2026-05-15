@@ -6,7 +6,15 @@
 
 @layer base {
   :root {
-    --background: 0 0% 96.5%;
+    /* 
+    0 0% 96.5%
+    77, 12%, 87% 
+    207, 36%, 95%
+    20, 36%, 95%
+    */
+    --background: 20, 36%, 95%; 
+
+    /* 210 7% 8% */
     --foreground: 210 7% 8%;
 
     --card: 0 0% 100%;
@@ -15,7 +23,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 210 7% 8%;
 
-    --primary: 209 22% 54%;
+    --primary: 340 45% 25%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 213 18% 23%;
@@ -24,7 +32,7 @@
     --muted: 210 10% 92%;
     --muted-foreground: 213 8% 48%;
 
-    --accent: 209 22% 54%;
+    --accent: 340 45% 25%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
@@ -32,7 +40,7 @@
 
     --border: 210 14% 89%;
     --input: 210 14% 89%;
-    --ring: 209 22% 54%;
+    --ring: 340 45% 25%;
 
     --radius: 0.875rem;
 
@@ -130,4 +138,9 @@
 @keyframes fadeSlideUp {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+.svg-container svg {
+  width: 100%;
+  height: 100%;
 }
