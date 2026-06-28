@@ -1,17 +1,6 @@
 {
   "rewrites": [
     {
-      "source": "/outfit/:id",
-      "has": [
-        {
-          "type": "header",
-          "key": "user-agent",
-          "value": "(Twitterbot|facebookexternalhit|Facebot|LinkedInBot|WhatsApp|Discordbot|Slackbot-LinkExpanding|Pinterestbot|TelegramBot|Applebot|Googlebot|Bingbot)"
-        }
-      ],
-      "destination": "https://hpmcnchtqancomrlgxpu.supabase.co/functions/v1/og?outfit_id=:id"
-    },
-    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

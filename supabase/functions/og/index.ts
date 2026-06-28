@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { initWasm, Resvg } from "npm:@resvg/resvg-wasm@2.6.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -25,6 +26,20 @@ const FALLBACK_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" heigh
   <text x="50%" y="55%" font-family="system-ui, -apple-system, sans-serif" font-size="24" fill="rgba(255,255,255,0.7)" text-anchor="middle" dominant-baseline="middle">Your Intelligent Personal Stylist</text>
 </svg>`;
 
+let wasmReady: Promise<void> | null = null;
+
+async function ensureWasm(): Promise<void> {
+  if (!wasmReady) {
+    wasmReady = (async () => {
+      const res = await fetch(
+        "https://cdn.jsdelivr.net/npm/@resvg/resvg-wasm@2.6.2/index_bg.wasm",
+      );
+      await initWasm(await res.arrayBuffer());
+    })();
+  }
+  return wasmReady;
+}
+
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, "&amp;")
@@ -48,12 +63,9 @@ function buildHtml(title: string, desc: string, image: string, url: string): str
   <meta property="og:url" content="${escapeHtml(url)}"/>
   <meta property="og:type" content="website"/>
   <meta name="twitter:card" content="summary_large_image"/>
-  <meta http-equiv="refresh" content="0; url=${escapeHtml(url)}"/>
   <link rel="canonical" href="${escapeHtml(url)}"/>
 </head>
-<body>
-  <script>location.href="${escapeHtml(url)}"</script>
-</body>
+<body/>
 </html>`;
 }
 
@@ -82,6 +94,37 @@ function buildDescription(outfit: Record<string, unknown>, itemCount: number): s
     parts.push(String(outfit.styling_notes).slice(0, 120));
   }
   return parts.join(" · ") || "Check out this outfit on Attira";
+}
+
+function extractSvg(raw: string): string | null {
+  const prefixes = [
+    "data:image/svg+xml;utf8,",
+    "data:image/svg+xml,",
+  ];
+  for (const prefix of prefixes) {
+    if (raw.startsWith(prefix)) {
+      try {
+        return decodeURIComponent(raw.slice(prefix.length));
+      } catch {
+        return raw.slice(prefix.length);
+      }
+    }
+  }
+  if (raw.startsWith("<svg")) return raw;
+  return null;
+}
+
+async function svgToPng(svg: string): Promise<Uint8Array | null> {
+  try {
+    await ensureWasm();
+    const resvg = new Resvg(svg, {
+      background: "#DEDAD9",
+    });
+    return resvg.render().asPng();
+  } catch (e) {
+    console.error("svgToPng error:", e);
+    return null;
+  }
 }
 
 serve(async (req) => {
@@ -115,17 +158,38 @@ serve(async (req) => {
     }
 
     if (mode === "image") {
-      return serveOutfitImage(outfit);
+      const raw = outfit.composition_url as string | null;
+      if (!raw) return fallbackImage();
+
+      const svg = extractSvg(raw);
+      if (!svg) return fallbackImage();
+
+      const png = await svgToPng(svg);
+      if (png) {
+        return new Response(png, {
+          headers: {
+            "Content-Type": "image/png",
+            "Cache-Control": "public, max-age=86400",
+            ...corsHeaders,
+          },
+        });
+      }
+
+      return new Response(svg, {
+        headers: {
+          "Content-Type": "image/svg+xml",
+          "Cache-Control": "public, max-age=86400",
+          ...corsHeaders,
+        },
+      });
     }
 
-    // Fetch creator profile
     const { data: profile } = await supabase
       .from("profiles")
       .select("username, first_name")
       .eq("user_id", outfit.user_id)
       .maybeSingle();
 
-    // Count items in this outfit
     const { count: itemCount } = await supabase
       .from("outfit_items")
       .select("*", { count: "exact", head: true })
@@ -148,46 +212,3 @@ serve(async (req) => {
     return genericHtml();
   }
 });
-
-function serveOutfitImage(outfit: Record<string, unknown>): Response {
-  const raw = outfit.composition_url as string | null;
-  let svg: string | null = null;
-
-  try{
-
-  if (raw) {
-    const prefixes = [
-      "data:image/svg+xml;utf8,",
-      "data:image/svg+xml,",
-    ];
-
-    for (const prefix of prefixes) {
-      if (raw.startsWith(prefix)) {
-        try {
-          svg = decodeURIComponent(raw.slice(prefix.length));
-        } catch {
-          svg = raw.slice(prefix.length);
-        }
-        break;
-      }
-    }
-
-    if (!svg && raw.startsWith("<svg")) {
-      svg = raw;
-    }
-  }
-
-  if (!svg) return fallbackImage();
-
-  return new Response(svg, {
-    headers: {
-      "Content-Type": "image/svg+xml",
-      "Cache-Control": "public, max-age=86400",
-      ...corsHeaders,
-    },
-  });
-    } catch (e) {
-      console.error("serveOutfitImage error:", e);
-      return fallbackImage();
-    }
-}
