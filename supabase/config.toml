@@ -2,3 +2,6 @@ project_id = "jwcltsvdidtjuevtmjeq"
 
 [functions.generate-outfit]
 verify_jwt = false
+
+[functions.og]
+verify_jwt = false
