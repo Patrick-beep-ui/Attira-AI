@@ -60,7 +60,7 @@ const queryClient = useQueryClient();
   const { data: feedResult, isLoading } = useQuery({
     queryKey: ["feed"],
     queryFn: () => getPublicOutfits(20),
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 30,
   });
 
   const feed = (feedResult?.data as unknown as FeedOutfit[]) || [];
