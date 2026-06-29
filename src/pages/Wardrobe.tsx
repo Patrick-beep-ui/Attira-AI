@@ -455,7 +455,7 @@ export default function Wardrobe() {
       return;
     }
 
-    setItems(items.map(i => i.id === item.id ? { ...i, is_available: newValue } : i));
+    queryClient.invalidateQueries({ queryKey: ["wardrobe", user?.id] });
   };
 
   return (
