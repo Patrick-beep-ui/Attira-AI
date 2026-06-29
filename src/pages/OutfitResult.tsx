@@ -17,7 +17,7 @@ export default function OutfitResult() {
 
   const location = useLocation();
   const navigate = useNavigate();
-  const { t, tValue } = useLanguage();
+  const { t, tValue, language } = useLanguage();
   const { user } = useAuth();
   const outfit = location.state?.outfit as GeneratedOutfit | undefined;
   console.log("🎬 OUTFIT RESULT:", outfit);
@@ -298,7 +298,7 @@ export default function OutfitResult() {
             <Button
               variant="outline"
               onClick={async () => {
-                await shareOutfit(compositionUrl ?? null, currentOutfitId ?? undefined);
+                await shareOutfit(compositionUrl ?? null, currentOutfitId ?? undefined, language);
               }}
             >
               <Share2 className="h-4 w-4" />

@@ -43,7 +43,7 @@ interface SavedLook extends GeneratedOutfit {
 
 export default function SavedLooks() {
   const { user } = useAuth();
-  const { t, tValue } = useLanguage();
+  const { t, tValue, language } = useLanguage();
   const [filter, setFilter] = useState("All");
   const [selectedLook, setSelectedLook] = useState<SavedLook | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
@@ -164,7 +164,7 @@ const handleDelete = async () => {
   const handleShare = async (look: SavedLook) => {
     setSharing(true);
     try {
-      await shareOutfit(look.compositionUrl ?? look.composition_url ?? null, look.id);
+      await shareOutfit(look.compositionUrl ?? look.composition_url ?? null, look.id, language);
     } finally {
       setSharing(false);
     }
@@ -223,6 +223,13 @@ const handleDelete = async () => {
                   <X className="h-5 w-5 text-muted-foreground" />
                 </button>
               </div>
+
+              {/* Outfit Preview */}
+              {selectedLook.composition_url && (
+                <div className="mb-4 w-full overflow-hidden rounded-lg border border-border md:aspect-[5/6] md:max-h-[calc(50vh-2rem)]" dangerouslySetInnerHTML={{
+                  __html: decodeURIComponent(selectedLook.composition_url.replace("data:image/svg+xml;utf8,", "")).replace(/width="500"/g, 'width="100%"').replace(/height="600"/g, 'height="100%"')
+                }} />
+              )}
 
               {/* Occasion & Formality */}
               <div className="mb-4 flex flex-wrap gap-2">
