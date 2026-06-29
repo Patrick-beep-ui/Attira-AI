@@ -62,10 +62,14 @@ function buildHtml(title: string, desc: string, image: string, url: string): str
   <meta property="og:image" content="${escapeHtml(image)}"/>
   <meta property="og:url" content="${escapeHtml(url)}"/>
   <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="Attira"/>
   <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="${escapeHtml(title)}"/>
+  <meta name="twitter:description" content="${escapeHtml(desc)}"/>
   <link rel="canonical" href="${escapeHtml(url)}"/>
 </head>
-<body/>
+<body>
+</body>
 </html>`;
 }
 
@@ -127,6 +131,56 @@ async function svgToPng(svg: string): Promise<Uint8Array | null> {
   }
 }
 
+async function embedImages(svg: string): Promise<string> {
+  const urlMap = new Map<string, string>();
+  const hrefRegex = /(?:href|xlink:href)="([^"]+)"/g;
+  let m: RegExpExecArray | null;
+
+  while ((m = hrefRegex.exec(svg)) !== null) {
+    const url = m[1];
+    if (!url.startsWith("data:") && !urlMap.has(url)) {
+      try {
+        const resp = await fetch(url);
+        const buf = await resp.arrayBuffer();
+        const bytes = new Uint8Array(buf);
+        let binary = "";
+        for (let i = 0; i < bytes.length; i += 8192) {
+          binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
+        }
+        const ext = url.split(".").pop()?.toLowerCase() || "jpg";
+        const mime = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
+        urlMap.set(url, `data:${mime};base64,${btoa(binary)}`);
+      } catch (e) {
+        console.error(`embedImages: failed to fetch ${url}:`, e);
+        urlMap.set(url, url);
+      }
+    }
+  }
+
+  if (urlMap.size === 0) return svg;
+
+  let result = svg;
+  for (const [original, replacement] of urlMap) {
+    result = result.replaceAll(original, replacement);
+  }
+  return result;
+}
+
+function wrapForOgCard(svg: string): string {
+  const inner = svg
+    .replace(/<\?xml[^>]*\?>/g, "")
+    .replace(/<svg[^>]*>/i, "")
+    .replace(/<\/svg>/i, "")
+    .trim();
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="100%" height="100%" fill="#2C3442"/>
+  <svg x="350" y="15" width="500" height="600" viewBox="0 0 500 600">
+    ${inner}
+  </svg>
+</svg>`;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -161,8 +215,11 @@ serve(async (req) => {
       const raw = outfit.composition_url as string | null;
       if (!raw) return fallbackImage();
 
-      const svg = extractSvg(raw);
+      let svg = extractSvg(raw);
       if (!svg) return fallbackImage();
+
+      svg = await embedImages(svg);
+      svg = wrapForOgCard(svg);
 
       const png = await svgToPng(svg);
       if (png) {
