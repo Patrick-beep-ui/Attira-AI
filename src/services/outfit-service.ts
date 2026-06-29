@@ -3,11 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 const SHARE_MESSAGES: Record<string, { title: string; text: string }> = {
   en: {
     title: "My Attira Outfit",
-    text: "Look at my outfit made with Attira 🤩",
+    text: "Look at my outfit made with Attira 🤩✨",
   },
   es: {
     title: "Mi Outfit de Attira",
-    text: "Mira mi outfit creado con Attira 🤩",
+    text: "Mira mi outfit creado con Attira 🤩✨",
   },
 };
 
@@ -17,7 +17,7 @@ export async function shareOutfit(compositionUrl: string | null, outfitId?: stri
   const lang = language === "es" ? "es" : "en";
   const messages = SHARE_MESSAGES[lang];
   const outfitLink = outfitId ? `${APP_URL}/outfit/${outfitId}` : APP_URL;
-  const shareText = `${messages.text}\n\n${outfitLink}`;
+  const shareText = `${messages.text}`;
 
   const shareData: ShareData = {
     title: messages.title,
