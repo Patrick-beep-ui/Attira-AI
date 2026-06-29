@@ -76,7 +76,7 @@ function buildHtml(title: string, desc: string, image: string, url: string): str
 function genericHtml(): Response {
   return new Response(
     buildHtml(DEFAULT_TITLE, DEFAULT_DESC, `${SITE_URL}/og-image.png`, SITE_URL),
-    { headers: { "Content-Type": "text/html; charset=utf-8" } },
+    { headers: { "Content-Type": "text/html; charset=utf-8", ...corsHeaders } },
   );
 }
 
@@ -85,6 +85,7 @@ function fallbackImage(): Response {
     headers: {
       "Content-Type": "image/svg+xml",
       "Cache-Control": "public, max-age=3600",
+      ...corsHeaders,
     },
   });
 }
@@ -262,6 +263,7 @@ serve(async (req) => {
       headers: {
         "Content-Type": "text/html; charset=utf-8",
         "Cache-Control": "no-cache",
+        ...corsHeaders,
       },
     });
   } catch (e) {
