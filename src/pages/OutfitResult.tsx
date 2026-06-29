@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { publishOutfit, unpublishOutfit, shareOutfit } from "@/services/outfit-service";
 
 export default function OutfitResult() {
@@ -22,6 +23,7 @@ export default function OutfitResult() {
   const outfit = location.state?.outfit as GeneratedOutfit | undefined;
   console.log("🎬 OUTFIT RESULT:", outfit);
   
+  const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
   const [currentOutfitId, setCurrentOutfitId] = useState<string | null>(null);
   const [isPublic, setIsPublic] = useState(false);
@@ -111,6 +113,7 @@ export default function OutfitResult() {
 
       }
 
+      queryClient.invalidateQueries({ queryKey: ["saved-looks", user.id] });
       toast.success(t("outfit_result.look_saved"));
       navigate("/saved");
 
@@ -273,6 +276,8 @@ export default function OutfitResult() {
                     setIsPublic(true);
                     toast.success(t("outfit_result.outfit_is_public"));
                   }
+                  queryClient.invalidateQueries({ queryKey: ["saved-looks", user.id] });
+                  queryClient.invalidateQueries({ queryKey: ["feed"] });
                 } catch (err) {
                   toast.error(t("outfit_result.failed_to_update"));
                 } finally {

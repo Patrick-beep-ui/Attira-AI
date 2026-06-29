@@ -111,7 +111,6 @@ export default function SavedLooks() {
       }));
     },
     enabled: !!user,
-    staleTime: 1000 * 60 * 10, // 10 minutes
   });
 
   const looks = looksData || [];
@@ -132,6 +131,7 @@ const handleDelete = async () => {
       toast.error("Failed to delete look.");
     } else {
       queryClient.invalidateQueries({ queryKey: ["saved-looks", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["feed"] });
       if (selectedLook?.id === deleteTarget) setSelectedLook(null);
       toast.success("Look deleted.");
     }
@@ -151,6 +151,7 @@ const handleDelete = async () => {
         toast.success("Outfit is now private");
       }
       queryClient.invalidateQueries({ queryKey: ["saved-looks", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["feed"] });
       if (selectedLook?.id === lookId) {
         setSelectedLook((prev) => (prev ? { ...prev, is_public: makePublic } : null));
       }

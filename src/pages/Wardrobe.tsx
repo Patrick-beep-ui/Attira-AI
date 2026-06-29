@@ -100,7 +100,6 @@ export default function Wardrobe() {
     queryKey: ["wardrobe", user?.id],
     queryFn: () => fetchWardrobeItems(user!.id),
     enabled: !!user,
-    staleTime: 1000 * 60 * 10, // 10 minutes
   });
 
   const items = itemsData || [];

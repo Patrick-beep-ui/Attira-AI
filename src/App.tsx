@@ -53,7 +53,7 @@ function RequireAuthOnly({ children }: { children: JSX.Element }) {
 const App = () => (
   <PersistQueryClientProvider
     client={queryClient}
-    persistOptions={{ persister }}
+    persistOptions={{ persister, maxAge: 1000 * 60 * 5 }}
     onSuccess={() => queryClient.resumePausedMutations()}
   >
     <AuthProvider>
