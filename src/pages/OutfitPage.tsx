@@ -55,7 +55,7 @@ export default function OutfitPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { t, tValue } = useLanguage();
+  const { t, tValue, language } = useLanguage();
   const [outfit, setOutfit] = useState<OutfitData | null>(null);
   const [creatorProfile, setCreatorProfile] = useState<ProfileData | null>(null);
   const [items, setItems] = useState<any[]>([]);
@@ -295,7 +295,7 @@ export default function OutfitPage() {
             variant="outline"
             className="flex-1 gap-2"
             onClick={async () => {
-              await shareOutfit(compositionUrl, outfit.id);
+              await shareOutfit(compositionUrl, outfit.id, language);
             }}
           >
             <Share2 className="h-4 w-4" />

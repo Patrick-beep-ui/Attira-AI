@@ -1,44 +1,54 @@
 import { supabase } from "@/integrations/supabase/client";
 
-const SHARE_MESSAGE = "Check out my new outfit generated with Attira 🤩";
-const APP_URL = "https://dressly.app";
-
-export async function shareOutfit(compositionUrl: string | null, outfitId?: string): Promise<boolean> {
-  const outfitLink = outfitId ? `${APP_URL}/outfit/${outfitId}` : APP_URL;
-  const shareText = `${SHARE_MESSAGE}\n\n${outfitLink}`;
-  
-  // Build share data
-  const shareData: ShareData = {
+const SHARE_MESSAGES: Record<string, { title: string; text: string }> = {
+  en: {
     title: "My Attira Outfit",
+    text: "Look at my outfit made with Attira 🤩",
+  },
+  es: {
+    title: "Mi Outfit de Attira",
+    text: "Mira mi outfit creado con Attira 🤩",
+  },
+};
+
+const APP_URL = "https://app.attiraai.com";
+
+export async function shareOutfit(compositionUrl: string | null, outfitId?: string, language?: string): Promise<boolean> {
+  const lang = language === "es" ? "es" : "en";
+  const messages = SHARE_MESSAGES[lang];
+  const outfitLink = outfitId ? `${APP_URL}/outfit/${outfitId}` : APP_URL;
+  const shareText = `${messages.text}\n\n${outfitLink}`;
+
+  const shareData: ShareData = {
+    title: messages.title,
     text: shareText,
     url: outfitLink,
   };
-  
-  // Try to add image if available
-  if (compositionUrl) {
+
+  if (outfitId) {
     try {
-      const response = await fetch(compositionUrl);
-      const blob = await response.blob();
-      const file = new File([blob], "outfit.png", { type: "image/png" });
-      shareData.files = [file];
+      const ogImageUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/og?mode=image&outfit_id=${outfitId}`;
+      const response = await fetch(ogImageUrl);
+      if (response.ok) {
+        const blob = await response.blob();
+        const file = new File([blob], "outfit.png", { type: "image/png" });
+        shareData.files = [file];
+      }
     } catch (err) {
       console.log("Could not load image for sharing:", err);
     }
   }
-  
-  // Try Web Share API directly (works on iOS Safari, Chrome mobile even if canShare returns false)
+
   if (navigator.share) {
     try {
       await navigator.share(shareData);
       return true;
     } catch (err: any) {
-      // User cancelled is not an error
       if (err.name === "AbortError") return true;
       console.log("Share API error:", err);
     }
   }
-  
-  // Fallback: clipboard
+
   if (navigator.clipboard) {
     try {
       await navigator.clipboard.writeText(shareText);
@@ -47,8 +57,7 @@ export async function shareOutfit(compositionUrl: string | null, outfitId?: stri
       console.log("Clipboard failed:", err);
     }
   }
-  
-  // Last fallback: copy textarea
+
   const textarea = document.createElement("textarea");
   textarea.value = shareText;
   textarea.style.position = "fixed";
@@ -62,9 +71,8 @@ export async function shareOutfit(compositionUrl: string | null, outfitId?: stri
   } catch (err) {
     document.body.removeChild(textarea);
   }
-  
-  // Last resort: email
-  window.open(`mailto:?subject=Check out my outfit&body=${encodeURIComponent(shareText)}`);
+
+  window.open(`mailto:?subject=${encodeURIComponent(messages.title)}&body=${encodeURIComponent(shareText)}`);
   return true;
 }
 
