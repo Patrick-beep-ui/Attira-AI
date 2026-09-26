@@ -24,3 +24,14 @@ export async function fetchWardrobeItems(userId: string) {
     category_name: item.clothing_categories?.name ?? null
   }));
 }
+
+export async function countWardrobeItems(userId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from("wardrobe_items")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId);
+
+  if (error) throw error;
+
+  return count ?? 0;
+}
