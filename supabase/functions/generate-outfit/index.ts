@@ -5,37 +5,12 @@ import { outfitModule } from "../ai/index.ts";
 import { extractJSON } from "../ai/helpers/cleanJSON.ts";
 import { composeOutfitSVG } from "../ai/modules/CanvasComposer.ts";
 import { buildOutfitLayout } from "../ai/modules/OutfitLayout.ts";
+import { getMainCategory, normalizeCategory } from "../ai/modules/categories.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
-};
-
-/*
-  CATEGORY NORMALIZER
-*/
-const normalizeCategory = (cat: string | null) => {
-  if (!cat) return null;
-
-  const c = cat.toLowerCase();
-
-  if (["top", "tops"].includes(c)) return "tops";
-  if (["bottom", "bottoms"].includes(c)) return "bottoms";
-  if (["shoe", "shoes"].includes(c)) return "shoes";
-  if (["accessory", "accessories"].includes(c)) return "accessories";
-  if (c === "outerwear") return "outerwear";
-
-  return c;
-};
-
-const getMainCategory = (item: any) => {
-  const sub = item.clothing_categories;
-  const parent = sub?.parent;
-
-  const categoryName = parent?.name || sub?.name;
-
-  return normalizeCategory(categoryName);
 };
 
 /*

@@ -89,6 +89,7 @@ You create outfit recommendations from a user's actual wardrobe items.
 Rules:
   - ONLY suggest items that exist in the user's wardrobe listed below.
   - If the wardrobe is empty or has too few items, suggest a minimal outfit and note what's missing.
+  - A dress is a one-piece garment: if you choose an item from the dresses category, do not also choose an item from tops or bottoms.
   - Consider the occasion, formality level, season compatibility, weather appropriateness, and color coordination.
   - Consider the user's color preference if provided.
   - Consider the event context if provided.
@@ -121,7 +122,7 @@ Return ONLY valid JSON in this format:
     {
       "id":"wardrobe_item_id",
       "name":"item name",
-      "category":"tops | bottoms | shoes | accessories | outerwear",
+      "category":"tops | bottoms | dresses | shoes | accessories | outerwear",
       "color":"#hex if available or use the color provided in the wardrobe item",
     }
   ],
