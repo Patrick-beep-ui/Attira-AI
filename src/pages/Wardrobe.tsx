@@ -4,7 +4,7 @@ import { AppShell } from "@/components/AppShell";
 import { HeaderBar } from "@/components/HeaderBar";
 import { TagChip } from "@/components/TagChip";
 import { Plus, Camera, Loader2, Upload, CheckCircle, Circle } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,7 +14,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
 import { WardrobeItemDetail } from "@/components/WardrobeItemDetails";
-import { fetchWardrobeItems } from "@/lib/services/wardrobeService";
+import { fetchWardrobeItems, countWardrobeItems } from "@/lib/services/wardrobeService";
+import { getWardrobeCap } from "@/config/wardrobe-limits";
 import { removeBackground } from "@/services/image-composition-service";
 import { CameraCapture, CameraMode } from "@/components/CameraCapture";
 import { ColorPicker } from "@/components/ColorPicker";
@@ -77,6 +78,7 @@ export default function Wardrobe() {
   const [originalImageData, setOriginalImageData] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [processedImage, setProcessedImage] = useState<string | null>(null);
+  const [processedBlob, setProcessedBlob] = useState<Blob | null>(null);
   const [imageProcessing, setImageProcessing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -103,6 +105,20 @@ export default function Wardrobe() {
   });
 
   const items = itemsData || [];
+
+  // Total item count (authoritative) — used for the CML upload cap
+  const { data: itemCount } = useQuery({
+    queryKey: ["wardrobe", user?.id, "count"],
+    queryFn: () => countWardrobeItems(user!.id),
+    enabled: !!user,
+  });
+
+  const wardrobeCap = getWardrobeCap(user?.email);
+  // null cap = account is not limited
+  const remaining = wardrobeCap === null ? null : Math.max(wardrobeCap - (itemCount ?? 0), 0);
+  const atLimit = remaining !== null && remaining <= 0;
+  // Fail closed: while the cap exists but the count is unknown, block uploads
+  const limitUnverified = wardrobeCap !== null && itemCount === undefined;
 
 
   // Fetch categories from DB
@@ -206,6 +222,11 @@ export default function Wardrobe() {
       const file = e.target.files?.[0];
       if (!file) return;
 
+      if (limitUnverified || atLimit) {
+        e.target.value = "";
+        return toast.error(t("wardrobe.limit_reached_toast"));
+      }
+
       setImageFile(file);
 
       const reader = new FileReader();
@@ -221,6 +242,7 @@ export default function Wardrobe() {
           const blob = await removeBackground(imageData);
           const cleanUrl = URL.createObjectURL(blob);
 
+          setProcessedBlob(blob);
           setImagePreview(cleanUrl);
 
           // ✅ detect AFTER cleanup
@@ -229,6 +251,7 @@ export default function Wardrobe() {
           console.error(err);
 
           // fallback to original
+          setProcessedBlob(null);
           setImagePreview(imageData);
           detectColorFromImage(imageData);
         }
@@ -252,12 +275,17 @@ export default function Wardrobe() {
     setOriginalImageData(null);
     setImagePreview(null);
     setProcessedImage(null);
+    setProcessedBlob(null);
     setCameraOpen(false);
     setDetectedColorHex(null);
     setColorDetectAttempted(false);
   };
 
     const handleCameraCapture = async (file: File) => {
+      if (limitUnverified || atLimit) {
+        return toast.error(t("wardrobe.limit_reached_toast"));
+      }
+
       setImageFile(file);
 
       const reader = new FileReader();
@@ -273,10 +301,12 @@ export default function Wardrobe() {
           const blob = await removeBackground(imageData);
           const cleanUrl = URL.createObjectURL(blob);
 
+          setProcessedBlob(blob);
           setImagePreview(cleanUrl);
           detectColorFromImage(cleanUrl);
         } catch (err) {
           console.error(err);
+          setProcessedBlob(null);
           setImagePreview(imageData);
           detectColorFromImage(imageData);
         }
@@ -292,6 +322,10 @@ export default function Wardrobe() {
 
   const handleAdd = async () => {
     if (!user) return toast.error("Please sign in first");
+
+    if (limitUnverified || atLimit) {
+      return toast.error(t("wardrobe.limit_reached_toast"));
+    }
 
     const hasSubcategory = parentCategoryId
       ? subCategories.some((c) => c.parent_category_id === parentCategoryId)
@@ -350,8 +384,9 @@ export default function Wardrobe() {
       return toast.error(error?.message || "Insert failed");
     }
 
-    // ✅ Save reference BEFORE reset (resetForm clears originalImageData)
+    // ✅ Save references BEFORE reset (resetForm clears originalImageData and processedBlob)
     const imageDataForProcessing = originalImageData;
+    const blobForProcessing = processedBlob;
 
     // ✅ UI responds instantly
     toast.success("Item added!");
@@ -362,7 +397,13 @@ export default function Wardrobe() {
 
     // 🚀 3. PROCESS IMAGE ASYNC (NON-BLOCKING)
     if (imageDataForProcessing) {
-      removeBackground(imageDataForProcessing)
+      // Reuse the background-removed blob from the preview so remove.bg is only
+      // called once per item. Only re-call it if the preview step failed.
+      const processing = blobForProcessing
+        ? Promise.resolve(blobForProcessing)
+        : removeBackground(imageDataForProcessing);
+
+      processing
         .then(async (blob) => {
           const path = `${user.id}/${crypto.randomUUID()}.png`;
 
@@ -460,7 +501,22 @@ export default function Wardrobe() {
 
   return (
     <AppShell>
-      <HeaderBar title={t("wardrobe.wardrobe")} right={<span className="text-body-sm text-muted-foreground">{items.length} items</span>} />
+      <HeaderBar
+        title={t("wardrobe.wardrobe")}
+        right={
+          <span className="text-body-sm text-muted-foreground">
+            {items.length} items
+            {wardrobeCap !== null && (
+              <span className={atLimit ? "text-destructive" : "text-primary"}>
+                {" · "}
+                {atLimit
+                  ? t("wardrobe.limit_reached")
+                  : t("wardrobe.items_remaining", { remaining, max: wardrobeCap })}
+              </span>
+            )}
+          </span>
+        }
+      />
 
       {/* Availability Filters */}
       <div className="flex gap-2 px-4 pt-2">
@@ -529,11 +585,15 @@ export default function Wardrobe() {
 
       {/* FAB */}
       <Dialog open={addOpen} onOpenChange={(open) => { setAddOpen(open); if (!open) resetForm(); }}>
-        <DialogTrigger asChild>
-          <button className="fixed bottom-24 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-105 active:scale-95">
-            <Plus className="h-6 w-6" />
-          </button>
-        </DialogTrigger>
+        <button
+          onClick={() => {
+            if (limitUnverified || atLimit) return toast.error(t("wardrobe.limit_reached_toast"));
+            setAddOpen(true);
+          }}
+          className={`fixed bottom-24 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-105 active:scale-95 ${atLimit ? "opacity-50" : ""}`}
+        >
+          <Plus className="h-6 w-6" />
+        </button>
         <DialogContent className="mx-4 max-w-sm rounded-2xl max-h-[80vh] p-0 flex flex-col">
           <DialogHeader className="px-6 pt-6">
             <DialogTitle className="font-display text-display-3">{t("wardrobe.add_item")}</DialogTitle>
@@ -559,6 +619,7 @@ export default function Wardrobe() {
                     setImageFile(null);
                     setOriginalImageData(null);
                     setProcessedImage(null);
+                    setProcessedBlob(null);
                   }}
                 >
                   Remove
