@@ -6,6 +6,7 @@ import { MapPin } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getProfile, getStylePreferences, canUpdatePersonalData, canUpdateStyleData, updatePersonalData, PersonalDataUpdateResult, StyleUpdateResult } from "@/services/profile-service";
+import { NICARAGUA_EXTRA_CITIES } from "@/data/locations";
 
 type CountryData = { iso2: string; country: string; cities: string[] };
 type CountryItem = { code: string; name: string };
@@ -133,7 +134,10 @@ export default function BodyProfile() {
     
     const countryData = allCountries.find((c) => c.iso2 === profile.countryCode);
     if (countryData) {
-      const sortedCities = [...countryData.cities].sort();
+      const base = profile.countryCode === "NI"
+        ? [...countryData.cities, ...NICARAGUA_EXTRA_CITIES]
+        : countryData.cities;
+      const sortedCities = [...new Set(base)].sort((a, b) => a.localeCompare(b, "es"));
       setCities(sortedCities);
       setFilteredCities(sortedCities);
     }
