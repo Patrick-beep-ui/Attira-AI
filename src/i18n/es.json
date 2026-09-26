@@ -168,6 +168,8 @@
     "last_name": "Apellido",
     "username": "Nombre de usuario",
     "profile_picture_url": "URL de foto de perfil",
+    "gender": "Género",
+    "gender_nudge": "Añade tu género a tu perfil",
     "cancel": "Cancelar",
     "save": "Guardar",
     "published_looks": "Looks Publicados",
@@ -190,6 +192,7 @@
     "username_taken": "Nombre de usuario ya está en uso",
     "check_error": "Error al verificar usuario",
     "checking": "Verificando...",
+    "gender": "Género",
     "continue": "Continuar"
   },
   "step_physical": {
@@ -233,6 +236,7 @@
     "location": "Ubicación",
     "height": "Altura",
     "weight": "Peso",
+    "gender": "Género",
     "body_type": "Tipo de Cuerpo",
     "fit": "Ajuste",
     "country": "País",
@@ -450,6 +454,11 @@
       "Business Casual": "Business Casual",
       "Elegant": "Elegante",
       "Sporty": "Deportivo"
+    },
+    "genders": {
+      "female": "Femenino",
+      "male": "Masculino",
+      "other": "Otro"
     }
   },
   "outfit_page": {

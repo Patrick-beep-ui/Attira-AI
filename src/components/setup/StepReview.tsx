@@ -2,6 +2,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function StepReview({ data, onSubmit, back }: any) {
   const { t, tValue } = useLanguage();
+  const name = data?.name || {};
   const physical = data?.physical || {};
   const style = data?.style || {};
   const location = data?.location || {};
@@ -12,6 +13,7 @@ export default function StepReview({ data, onSubmit, back }: any) {
     { section: t("step_review.physical"), items: [
       { k: t("step_review.height"), v: `${physical.height_cm ?? "-"} cm` },
       { k: t("step_review.weight"), v: `${physical.weight_kg ?? "-"} kg` },
+      { k: t("step_review.gender"), v: name.gender ? tValue("genders", name.gender) : "-" },
     ]},
 
     // Style

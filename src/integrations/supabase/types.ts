@@ -20,6 +20,7 @@ export type Database = {
           user_id: string
           body_type: string | null
           preferred_fit: string | null
+          gender: string | null
           height_cm: number | null
           weight_kg: number | null
           country_code: string | null
@@ -40,6 +41,7 @@ export type Database = {
           user_id: string
           body_type?: string | null
           preferred_fit?: string | null
+          gender?: string | null
           height_cm?: number | null
           weight_kg?: number | null
           country_code?: string | null
@@ -60,6 +62,7 @@ export type Database = {
           user_id?: string
           body_type?: string | null
           preferred_fit?: string | null
+          gender?: string | null
           height_cm?: number | null
           weight_kg?: number | null
           country_code?: string | null

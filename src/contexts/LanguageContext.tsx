@@ -8,7 +8,7 @@ type Language = "en" | "es";
 
 const translations: Record<Language, typeof en> = { en, es };
 
-type ValueType = "occasions" | "formality" | "categories" | "weather_conditions" | "body_types" | "body_type_names" | "fits" | "style_preferences";
+type ValueType = "occasions" | "formality" | "categories" | "weather_conditions" | "body_types" | "body_type_names" | "fits" | "style_preferences" | "genders";
 
 interface LanguageContextType {
   language: Language;

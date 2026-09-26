@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { updateUserProfile } from '../../src/services/profile-service';
+import { updateUserProfile, CreateUserProfileDTO } from '../../src/services/profile-service';
 
 // Mock the Supabase client to capture the payload sent to the insert call
 let lastPayload: any = null
@@ -47,5 +47,24 @@ describe('profile creation', () => {
     expect(lastPayload.country_code).toBe('NI')
     expect(lastPayload.city).toBe('Managua')
     expect(lastPayload.timezone).toBe('UTC')
+    expect(lastPayload.gender).toBeUndefined()
+  })
+
+  it('normalizes gender to lowercase when provided', async () => {
+    lastPayload = null
+    const dto = {
+      height_cm: 165,
+      weight_kg: 60,
+      body_type: 'Athletic',
+      preferred_fit: 'Relaxed',
+      country_code: 'ni',
+      city: 'Managua',
+      timezone: 'UTC',
+      gender: 'Female',
+    } as unknown as CreateUserProfileDTO
+
+    const { error } = await updateUserProfile('user-123', dto)
+    expect(error).toBeNull()
+    expect(lastPayload.gender).toBe('female')
   })
 })

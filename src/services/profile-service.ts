@@ -3,6 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 const PERSONAL_UPDATE_COOLDOWN_DAYS = 7;
 const STYLE_UPDATE_COOLDOWN_HOURS = 24;
 
+export type GenderType = "female" | "male" | "other";
+
+export const GENDER_OPTIONS: GenderType[] = ["female", "male", "other"];
+
 export type CreateUserProfileDTO = {
   first_name?: string;
   last_name?: string;
@@ -13,6 +17,7 @@ export type CreateUserProfileDTO = {
 
   body_type: "ectomorph" | "mesomorph" | "endomorph" | "athletic" | "average";
   preferred_fit: "tight" | "regular" | "relaxed" | "oversized";
+  gender?: GenderType;
 
   country_code: string;
   city: string;
@@ -53,6 +58,7 @@ export async function updateUserProfile(userId: string, dto: CreateUserProfileDT
   if (dto.first_name) payload.first_name = dto.first_name;
   if (dto.last_name) payload.last_name = dto.last_name;
   if (dto.username) payload.username = dto.username.toLowerCase();
+  if (dto.gender) payload.gender = dto.gender.toLowerCase();
 
   const { error } = await supabase
     .from("profiles")
@@ -288,12 +294,13 @@ export async function getPublicOutfitsByUser(userId: string): Promise<PublicOutf
   return data || [];
 }
 
-export async function updateProfileBasic(userId: string, dto: { first_name?: string; last_name?: string; username?: string; profile_picture_url?: string }) {
+export async function updateProfileBasic(userId: string, dto: { first_name?: string; last_name?: string; username?: string; profile_picture_url?: string; gender?: string | null }) {
   const payload: Record<string, unknown> = {};
   if (dto.first_name !== undefined) payload.first_name = dto.first_name;
   if (dto.last_name !== undefined) payload.last_name = dto.last_name;
   if (dto.username !== undefined) payload.username = dto.username;
   if (dto.profile_picture_url !== undefined) payload.profile_picture_url = dto.profile_picture_url;
+  if (dto.gender !== undefined) payload.gender = dto.gender;
 
   const { error } = await supabase
     .from("profiles")

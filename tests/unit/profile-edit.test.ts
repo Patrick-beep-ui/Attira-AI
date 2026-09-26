@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { canUpdatePersonalData, canUpdateStyleData, updatePersonalData } from '../../src/services/profile-service';
+import { canUpdatePersonalData, canUpdateStyleData, updatePersonalData, updateProfileBasic } from '../../src/services/profile-service';
 
 let lastUpdatePayload: any = null;
 let mockProfileData: any = null;
@@ -203,5 +203,40 @@ describe('profile edit - independent cooldowns', () => {
     expect(result.error).toBeNull();
     expect(lastUpdatePayload.last_personal_update).toBeDefined();
     expect(lastUpdatePayload.last_style_update).toBeDefined();
+  });
+});
+
+describe('profile edit - gender bypasses cooldowns', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    lastUpdatePayload = null;
+    mockProfileData = null;
+  });
+
+  it('updates gender while both cooldowns are active', async () => {
+    const justNow = new Date();
+    mockProfileData = {
+      id: 'profile-1',
+      user_id: 'user-123',
+      last_personal_update: justNow.toISOString(),
+      last_style_update: justNow.toISOString(),
+    };
+
+    const { error } = await updateProfileBasic('user-123', { gender: 'female' });
+
+    expect(error).toBeNull();
+    expect(lastUpdatePayload.gender).toBe('female');
+    expect(lastUpdatePayload.last_personal_update).toBeUndefined();
+    expect(lastUpdatePayload.last_style_update).toBeUndefined();
+  });
+
+  it('can clear gender back to null', async () => {
+    await updateProfileBasic('user-123', { gender: null });
+    expect(lastUpdatePayload.gender).toBeNull();
+  });
+
+  it('omits gender entirely when not provided', async () => {
+    await updateProfileBasic('user-123', { first_name: 'Ana' });
+    expect('gender' in lastUpdatePayload).toBe(false);
   });
 });
