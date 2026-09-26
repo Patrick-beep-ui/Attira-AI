@@ -76,7 +76,7 @@ const App = () => (
               element={
                 <RequireAuthOnly>
                   <ProfileSetup />
-                </RequireAuthOnly>
+               </RequireAuthOnly>
               }
             />
 

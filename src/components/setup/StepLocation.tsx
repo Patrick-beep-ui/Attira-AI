@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { NICARAGUA_EXTRA_CITIES } from "@/data/locations";
 
 type CountryItem = { code: string; name: string };
 type CountryData = { iso2: string; country: string; cities: string[] };
@@ -71,7 +72,10 @@ export default function StepLocation({ onNext, next, back }: any) {
 
     const countryData = allCountries.find((c) => c.iso2 === country);
     if (countryData) {
-      const sortedCities = [...countryData.cities].sort();
+      const base = country === "NI"
+        ? [...countryData.cities, ...NICARAGUA_EXTRA_CITIES]
+        : countryData.cities;
+      const sortedCities = [...new Set(base)].sort((a, b) => a.localeCompare(b, "es"));
       setCities(sortedCities);
       setFilteredCities(sortedCities);
     }
