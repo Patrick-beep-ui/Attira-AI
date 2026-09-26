@@ -168,6 +168,8 @@
     "last_name": "Last name",
     "username": "Username",
     "profile_picture_url": "Profile picture URL",
+    "gender": "Gender",
+    "gender_nudge": "Add gender to your profile",
     "cancel": "Cancel",
     "save": "Save",
     "published_looks": "Published Looks",
@@ -190,6 +192,7 @@
     "username_taken": "Username already taken",
     "check_error": "Error checking username",
     "checking": "Checking...",
+    "gender": "Gender",
     "continue": "Continue"
   },
   "step_physical": {
@@ -233,6 +236,7 @@
     "location": "Location",
     "height": "Height",
     "weight": "Weight",
+    "gender": "Gender",
     "body_type": "Body Type",
     "fit": "Fit",
     "country": "Country",
@@ -423,6 +427,11 @@
       "thunderstorm_with_slight_hail": "Thunderstorm with Hail",
       "thunderstorm_with_heavy_hail": "Thunderstorm with Heavy Hail",
       "unknown": "Unknown"
+    },
+    "genders": {
+      "female": "Female",
+      "male": "Male",
+      "other": "Other"
     }
   },
   "outfit_page": {

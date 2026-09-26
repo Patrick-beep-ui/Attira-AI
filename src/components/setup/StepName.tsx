@@ -1,14 +1,16 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { TagChip } from "@/components/TagChip";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { checkUsernameAvailable } from "@/services/profile-service";
+import { checkUsernameAvailable, GENDER_OPTIONS, GenderType } from "@/services/profile-service";
 import { Loader2 } from "lucide-react";
 
 export default function StepName({ data, onNext, next }: any) {
-  const { t } = useLanguage();
+  const { t, tValue } = useLanguage();
   const [firstName, setFirstName] = useState(data.first_name || "");
   const [lastName, setLastName] = useState(data.last_name || "");
   const [username, setUsername] = useState(data.username || "");
+  const [gender, setGender] = useState<GenderType | "">(data.gender || "");
   const [checking, setChecking] = useState(false);
   const [usernameError, setUsernameError] = useState("");
   const [usernameVerified, setUsernameVerified] = useState(false);
@@ -30,10 +32,11 @@ export default function StepName({ data, onNext, next }: any) {
       }
 
       setUsernameVerified(true);
-      onNext("name", { 
-        first_name: firstName, 
-        last_name: lastName, 
-        username: username.toLowerCase() 
+      onNext("name", {
+        first_name: firstName,
+        last_name: lastName,
+        username: username.toLowerCase(),
+        gender: gender || undefined
       });
       next();
     } catch (error) {
@@ -88,6 +91,20 @@ export default function StepName({ data, onNext, next }: any) {
         {usernameError && (
           <p className="text-red-500 text-sm mt-2">{usernameError}</p>
         )}
+      </div>
+
+      <div>
+        <p className="text-sm font-medium mb-2">{t("step_name.gender")}</p>
+        <div className="flex flex-wrap gap-2">
+          {GENDER_OPTIONS.map((g) => (
+            <TagChip
+              key={g}
+              label={tValue("genders", g)}
+              active={gender === g}
+              onClick={() => setGender(gender === g ? "" : g)}
+            />
+          ))}
+        </div>
       </div>
 
       <Button onClick={handleContinue} disabled={!isValid || checking} className="w-full">

@@ -5,11 +5,11 @@ import { TagChip } from "@/components/TagChip";
 import { User, Loader2, Edit2, Image as ImageIcon, Camera, Upload, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { getProfileByUsername, getPublicOutfitsByUser, updateProfileBasic, uploadProfilePicture, deleteProfilePicture, PublicProfile, PublicOutfit } from "@/services/profile-service";
+import { getProfileByUsername, getPublicOutfitsByUser, updateProfileBasic, uploadProfilePicture, deleteProfilePicture, GENDER_OPTIONS, GenderType, PublicProfile, PublicOutfit } from "@/services/profile-service";
 import { toast } from "sonner";
 
 export default function ProfilePage() {
-  const { t } = useLanguage();
+  const { t, tValue } = useLanguage();
   const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -28,6 +28,8 @@ export default function ProfilePage() {
     username: "",
     profile_picture_url: "",
   });
+  const [gender, setGender] = useState<GenderType | "">("");
+  const [savedGender, setSavedGender] = useState<GenderType | "">("");
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -38,6 +40,8 @@ export default function ProfilePage() {
 
   const loadProfile = async () => {
     setLoading(true);
+    setGender("");
+    setSavedGender("");
     try {
       const targetUsername = !username || username === "me" 
         ? null 
@@ -51,6 +55,10 @@ export default function ProfilePage() {
         const { getProfile } = await import("@/services/profile-service");
         const fullProfile = await getProfile(user.id);
         if (fullProfile) {
+          const rawGender = fullProfile.gender as GenderType | null;
+          const validGender = rawGender && GENDER_OPTIONS.includes(rawGender) ? rawGender : "";
+          setGender(validGender);
+          setSavedGender(validGender);
           profileData = {
             id: fullProfile.id,
             user_id: fullProfile.user_id,
@@ -116,6 +124,7 @@ export default function ProfilePage() {
         last_name: formData.last_name || null,
         username: formData.username || null,
         profile_picture_url: formData.profile_picture_url || null,
+        gender: gender || null,
       });
       if (oldUrl && formData.profile_picture_url !== oldUrl) {
         deleteProfilePicture(oldUrl).catch(console.error);
@@ -200,6 +209,19 @@ export default function ProfilePage() {
                 onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                 className="w-full rounded-lg border border-border bg-card px-4 py-2 text-body text-foreground"
               />
+              <div>
+                <p className="text-sm font-medium mb-2">{t("profile.gender")}</p>
+                <div className="flex flex-wrap gap-2">
+                  {GENDER_OPTIONS.map((g) => (
+                    <TagChip
+                      key={g}
+                      label={tValue("genders", g)}
+                      active={gender === g}
+                      onClick={() => setGender(gender === g ? "" : g)}
+                    />
+                  ))}
+                </div>
+              </div>
               <div className="space-y-2">
                 <input
                   ref={fileInputRef}
@@ -252,6 +274,7 @@ export default function ProfilePage() {
                       username: profile?.username || "",
                       profile_picture_url: profile?.profile_picture_url || "",
                     });
+                    setGender(savedGender);
                   }}
                 >
                   {t("profile.cancel")}
@@ -276,6 +299,27 @@ export default function ProfilePage() {
                   {profile.style_preferences.map((style) => (
                     <TagChip key={style} label={style} />
                   ))}
+                </div>
+              )}
+              {isOwnProfile && gender && (
+                <div className="mt-3 flex flex-wrap justify-center gap-2">
+                  <TagChip label={tValue("genders", gender)} active />
+                </div>
+              )}
+              {isOwnProfile && !gender && (
+                <div className="mt-4">
+                  <p className="text-body-sm text-muted-foreground">
+                    {t("profile.gender_nudge")}
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-2"
+                    onClick={() => setEditing(true)}
+                  >
+                    <Edit2 className="mr-2 h-4 w-4" />
+                    {t("profile.gender")}
+                  </Button>
                 </div>
               )}
             </div>
