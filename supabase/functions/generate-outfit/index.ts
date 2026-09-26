@@ -178,9 +178,12 @@ serve(async (req) => {
         id: item.id,
         name: item.name,
         category: getMainCategory(item),
+        subcategory: item.clothing_categories?.name ?? null,
         color: item.color ?? null,
         image_url: publicUrl,
         fabric: item.fabric ?? null,
+        brand: item.brand ?? null,
+        size: item.size ?? null,
       };
     });
     

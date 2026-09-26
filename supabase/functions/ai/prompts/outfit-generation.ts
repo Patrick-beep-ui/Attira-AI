@@ -4,10 +4,13 @@ export function outfitGenerationPrompt(data: any) {
       ? data.wardrobe
           .map((item: any) => {
             const categoryName = item.category ?? item.clothing_categories?.name ?? item.category_name ?? "unknown";
-            return `- id: ${item.id}, ${item.name}, (category: ${categoryName}, color: ${
+            const subcategoryName = item.subcategory ?? item.clothing_categories?.name ?? "unknown";
+            return `- id: ${item.id}, ${item.name}, (category: ${categoryName}, subcategory: ${subcategoryName}, color: ${
               item.color ?? "unknown"
             }, season: ${item.season ?? "all-season"}, fabric: ${
               item.fabric ?? "unknown"
+            }, brand: ${item.brand ?? "unknown"}, size: ${
+              item.size ?? "unknown"
             })`;
           })
           .join("\n")
@@ -90,6 +93,7 @@ Rules:
   - ONLY suggest items that exist in the user's wardrobe listed below.
   - If the wardrobe is empty or has too few items, suggest a minimal outfit and note what's missing.
   - A dress is a one-piece garment: if you choose an item from the dresses category, do not also choose an item from tops or bottoms.
+  - Each wardrobe line lists a broad "category" (the outfit slot) and a specific "subcategory" (the garment type). Use the subcategory to judge style, formality and how items work together.
   - Consider the occasion, formality level, season compatibility, weather appropriateness, and color coordination.
   - Consider the user's color preference if provided.
   - Consider the event context if provided.
