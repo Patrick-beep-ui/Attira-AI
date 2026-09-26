@@ -26,6 +26,7 @@ export function buildOutfitLayout(items: OutfitItem[]) {
     outerwear: { w: 350, h: 260 },
     tops: { w: 320, h: 320 },
     bottoms: { w: 300, h: 350 },
+    dresses: { w: 320, h: 420 },
     shoes: { w: 230, h: 250 },
     accessories: { w: 250, h: 250 }
   };
@@ -37,12 +38,21 @@ export function buildOutfitLayout(items: OutfitItem[]) {
 
   const getRotation = () => rand(-3, 3);
 
-  // 👉 Extract
+  // Extract
   const shoes = items.find(i => i.category === "shoes");
-  const tops = items.find(i => i.category === "tops");
-  const bottoms = items.find(i => i.category === "bottoms");
   const outerwear = items.find(i => i.category === "outerwear");
   const accessories = items.filter(i => i.category === "accessories");
+
+  /*
+    A dress is a one-piece garment, so it replaces both the top and the bottom
+    and takes over the anchor slot. When one is present we ignore any top or
+    bottom the model returned alongside it.
+  */
+  const dresses = items.find(i => i.category === "dresses");
+  const hasDress = dresses != null;
+
+  const tops = hasDress ? undefined : items.find(i => i.category === "tops");
+  const bottoms = hasDress ? undefined : items.find(i => i.category === "bottoms");
 
     /*
       BASE X SHIFT (move outfit to the left)
@@ -50,14 +60,16 @@ export function buildOutfitLayout(items: OutfitItem[]) {
   const baseX = centerX - 60;
 
   /*
-    🎯 1. BOTTOMS (anchor piece)
+    🎯 1. ANCHOR PIECE (dress, else bottoms)
   */
-  if (bottoms) {
-    const size = sizeMap.bottoms;
+  const anchor = dresses ?? bottoms;
+
+  if (anchor) {
+    const size = dresses ? sizeMap.dresses : sizeMap.bottoms;
 
     layers.push({
-      id: bottoms.id,
-      imageUrl: bottoms.imageUrl,
+      id: anchor.id,
+      imageUrl: anchor.imageUrl,
       x: baseX - size.w / 2 + 40 + rand(-10, 10),
       y: 250,
       w: size.w,
