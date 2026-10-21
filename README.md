@@ -1,73 +1,93 @@
-# Welcome to your Lovable project
+# Attira AI
 
-## Project info
+AI-powered fashion assistant that turns a user's real wardrobe, preferences, profile, and context into practical outfit recommendations.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+[Visit the official website](https://www.attiraai.com/)
 
-## How can I edit this code?
+## Overview
 
-There are several ways of editing your application.
+Attira is a full-stack product built to support everyday clothing decisions. Instead of generating generic fashion inspiration, the application works with information that belongs to the user: wardrobe items, style preferences, body profile, occasion, weather, prior choices, and feedback.
 
-**Use Lovable**
+The product combines a responsive React experience with Supabase-backed authentication, data, storage, and server-side functions. AI is treated as one part of the application workflow: inputs are collected and validated, relevant context is assembled, a structured recommendation is generated, and the result can be reviewed and saved by the user.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## Core capabilities
 
-Changes made via Lovable will be committed automatically to this repo.
+- Account creation, authentication, password recovery, and protected application routes
+- Guided profile setup for personal, style, and body information
+- Digital wardrobe management with item records and images
+- Context-aware outfit generation using wardrobe and preference data
+- Saved looks and individual outfit views
+- Public and private profile experiences
+- English/Spanish application context
+- Persisted client-side query data and an offline-status indicator
+- Responsive, mobile-first interface
 
-**Use your preferred IDE**
+## Application flow
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+1. A user creates an account and completes the profile setup.
+2. Clothing items are added to the digital wardrobe.
+3. The user provides the occasion and other relevant context.
+4. The application combines profile, wardrobe, preference, and contextual data.
+5. The AI workflow returns a structured outfit recommendation.
+6. The user reviews the result and can save it for later.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## Architecture
 
-Follow these steps:
+- **Client:** React, TypeScript, Vite, React Router
+- **UI:** Tailwind CSS, shadcn/ui, Radix UI, Framer Motion
+- **Forms and validation:** React Hook Form and Zod
+- **Server state:** TanStack Query with persisted query caching
+- **Backend platform:** Supabase Auth, PostgreSQL, Storage, and Edge Functions
+- **AI integration:** Gemini-based recommendation workflows
+- **Quality:** Vitest, React Testing Library, ESLint, and TypeScript checks
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+The frontend keeps product views, reusable UI, domain hooks, context providers, and Supabase access separated. Protected routes enforce authentication and profile completion before users reach the main product flows.
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## Local development
 
-# Step 3: Install the necessary dependencies.
-npm i
+### Prerequisites
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+- Node.js 18 or newer
+- npm
+- A configured Supabase project
+
+### Setup
+
+~~~bash
+git clone https://github.com/Patrick-beep-ui/Attira-AI.git
+cd Attira-AI
+npm install
+~~~
+
+Create a `.env` file with the public Supabase client configuration:
+
+~~~env
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
+~~~
+
+Start the application:
+
+~~~bash
 npm run dev
-```
+~~~
 
-**Edit a file directly in GitHub**
+## Available scripts
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+~~~bash
+npm run dev        # Start the Vite development server
+npm run build      # Create a production build
+npm run preview    # Preview the production build
+npm run test       # Run the Vitest suite
+npm run lint       # Run ESLint
+npm run typecheck  # Run TypeScript without emitting files
+~~~
 
-**Use GitHub Codespaces**
+## Project context
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+This repository contains the main Attira application. The project involved product architecture, database design, frontend development, Supabase infrastructure, AI integration, prompt workflows, and the end-to-end user experience.
 
-## What technologies are used for this project?
+## Data and secrets
 
-This project is built with:
+Do not commit service-role keys, model-provider secrets, or real user data. Browser-exposed variables must be limited to the Supabase public URL and publishable key; privileged operations belong in protected server-side functions.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
