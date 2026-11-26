@@ -1,11 +1,11 @@
 {
-  "name": "Attira",
-  "short_name": "Attira",
+  "name": "Attira AI",
+  "short_name": "Attira AI",
   "description": "Your intelligent personal stylist",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#F6F6F6",
-  "theme_color": "#2C3442",
+  "background_color": "#f7f4ef",
+  "theme_color": "#5c2336",
   "orientation": "portrait",
   "icons": [
     {
@@ -20,5 +20,7 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "id": "/",
+  "scope": "/"
 }

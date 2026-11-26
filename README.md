@@ -91,3 +91,26 @@ This repository contains the main Attira application. The project involved produ
 
 Do not commit service-role keys, model-provider secrets, or real user data. Browser-exposed variables must be limited to the Supabase public URL and publishable key; privileged operations belong in protected server-side functions.
 
+## PWA installation branding
+
+The installed application is named **Attira AI**. Its icons are PNG/ICO exports of
+`public/attira_logo_off.webp`; the original logo files remain unchanged.
+
+- `public/icon-192.png` and `public/icon-512.png`: manifest icons for installation.
+  The logo has an opaque background and padding for adaptive icon masks.
+- `public/apple-touch-icon.png`: 180 × 180 icon for Apple devices.
+- `public/favicon-32x32.png` and `public/favicon.ico`: browser and fallback icons.
+
+`public/manifest.json` defines the installed name and icons. `index.html` links the
+manifest and browser/Apple icons. Keep the manifest `id` and `start_url` at `/` to
+preserve the existing application's identity.
+
+After deploying, check the manifest in browser DevTools → Application → Manifest.
+Every icon URL must return an image, rather than the SPA's HTML fallback. Verify
+the installation from `https://app.attiraai.com` on Android and iOS.
+
+Existing installations may retain their previous name or icon until the browser
+updates their metadata. For an immediate check on a test device, remove the old
+home-screen installation and install it again after deployment. Do not clear site
+storage just to refresh branding; it may contain the session and local app data.
+
